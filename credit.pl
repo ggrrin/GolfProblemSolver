@@ -37,12 +37,14 @@
 % 
 
 :- use_module(library(clpfd)).
-:- use_module(library(assoc)).
 
 % n = 4
 % k = 2
 % g = 2
 % d = 3 
+
+test(DaysAttendance) :-
+	golf(DaysAttendance, 4, 2, 2, 2).
 
 golf(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
@@ -78,11 +80,11 @@ exactly(X, [Y|L], N) :-
         N #= M+B,
         exactly(X, L, M).
 
-:- use_module(library(clpfd)).
 
 pair_constrain(P) :-
 	suspensions(P, Suspensions),
-	fd_global(pair_constrain(P), empty, Suspensions).
+	next_grounded_state(P, [], Sout, _),
+	fd_global(pair_constrain(P), Sout, Suspensions).
 	
 				     
 suspensions([], []).
@@ -94,12 +96,11 @@ suspensions_day([], SLast, SLast).
 suspensions_day([P|Attendance], [val(P)|Suspensions], SLast) :-
 	suspensions_day(Attendance, Suspensions, SLast).
 
-:- use_module(library(avl)).
 
 :- multifile clpfd:dispatch_global/4.
 clpfd:dispatch_global(pair_constrain(P), Sin, Sout, Actions) :-
-	next_grounded_state(P, Sin, Sout),
-	invalidateDomains(P, Sout, InvalidValues),
+	next_grounded_state(P, Sin, Sout, PlayedRecord),
+	invalidateDomains(P, PlayedRecord, InvalidValues),
 	gather_actions(P, InvalidValues, Actions).
 
 
@@ -150,9 +151,11 @@ invalidateDomainsLoop([Dp|AttendanceDays], PairDays, [DpRecord|PlayedRecord], Pa
 	invalidatePairs([PairDays|AttendanceDays], Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut),
 	invalidateDomainsLoop(AttendanceDays, [PairDays|Dp], PlayedRecord, [PairsInvalidsBeginOut|DpInvalidsOut], PairsInvalidEndOut, InvalidValues).
 
+% invalidatePairs(+PairDays, +Dp, +DpRecord, +PairsInvalidsBegin, +DpInvalids, +PairsInvalidEnd, -PairsInvalidsBeginOut, -DpInvalidsOut, -PairsInvalidEndOut) :-
+% for all pairs p-Dp where p is from PairDays invalidate appropriate subtract fdsets
 invalidatePairs([], _, _, [], I, [], [], I, []).
 invalidatePairs([D|PairDays], Dp, DpRecord, [DInvalids|PairsInvalidsBegin], DpInvalids, PairsInvalidEnd, [DInvalidsOut|PairsInvalidsBeginOut], DpInvalidsOut, PairsInvalidEndOut) :-
-	% D days befor Dp
+	% D days before Dp
 	updateDayPairsInvalidValues(D, Dp, [], [], DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
 	invalidatePairs(PairDays, Dp, DpRecord, PairsInvalidsBegin, DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut).
 invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInvalidEnd], [], DpInvalidsOut, [DInvalidsOut|PairsInvalidEndOut]) :-
@@ -167,14 +170,14 @@ invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInva
 % Dp played day to process
 % DAc processed players acumulator
 % DpAc processed played players acumulator
-% DpRecord bit map determinig if player was played (none vs hit)
+% DpRecord bit map determinig if player was played (none vs ground)
 % InvalidsValuesIn = [DInvalids|DpInvalids] so far gathered invalids for D resp. Dp days
 % InvalidsValuesOut = [DInvalidsOut|DpInvalidsOut] updated invalids for D resp. Dp days
 updateDayPairsInvalidValues([], [], _, _, [], X, X).
 updateDayPairsInvalidValues([Di|D], [DpI|Dp], DAc, DpAc, [none|DpRecord], InvalidValuesIn, InvalidValues) :- 
 	%skip not played players
 	updateDayPairsInvalidValues(D, Dp, [DAc|Di], [DpAc|DpI], DpRecord, InvalidValuesIn, InvalidValues).
-updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [hit|DpRecord], [DInvalids|DpInvalids], InvalidValues) :- 
+updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DInvalids|DpInvalids], InvalidValues) :- 
 	DDay = [DAc|[Dn|D]],
 	DpDay = [DpAc|[DpN|Dp]],
 	(fd_var(Dn) -> process_unboundN_actions([DpAc|[none|Dp]], DDay, Dn, DpN, DInvalids, DInvalidsOut), % C.
@@ -259,34 +262,51 @@ get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids
 
 
 	
-% FOLLOWS FINDING OF READY GROUNDED 
 
-% next_grounded_state(Attendance, PrevState, NextState) :-
-next_grounded_state([], [], []).
-next_grounded_state([D|Attendance], [Dps|PrevState], [Dns|NextState]) :-
-	day_state(D, Dps, DnsX),
-	normalize_state(DnsX, [], Dns),
-	next_grounded_state(Attendance, PrevState, NextState).
+% next_grounded_state(+Attendance, +PrevState, -NextState, -PlayedRecord) :-
+% from current days Attandance and PrevState creates NextState and PlayedRecord
+% if PrevState is [] only NextState is created
+next_grounded_state([], [], [], []).
+next_grounded_state([D|Attendance], [], [Dns|NextState], X) :-
+	day_state(D, Dns),
+	next_grounded_state(Attendance, [], NextState, X).
+next_grounded_state([D|Attendance], [Dps|PrevState], [Dns|NextState], [NormalizedRecord|PlayedRecord]) :-
+	day_state(D, Dns),
+	played_record(Dps, Dns, Record),
+	(
+	none_record(Record) -> NormalizedRecord = none
+	;
+	NormalizedRecord = Record	
+	),
+	next_grounded_state(Attendance, PrevState, NextState, PlayedRecord).
 
-normalize_state([], none).
-normalize_state([none|Xs], Ac, Res) :-
-	normalize_state(Xs, [Ac|none], Res).
-normalize_state([grounded|Xs], Ac, [Ac|[grounded|Xs]]).
-normalize_state([ungrounded|Xs], Ac, [Ac|[grounded|Xs]]).
 
-% day_state(+D, +Dps, -NextState) :- 
-day_state([], [], []).
-day_state([P|D], [grounded|Dps], [ungrounded|NextState]) :- 
+% played_record(+Dps, +Dns, -Record) :-
+% creates played record of values ground|unground|none from Dps previous state and Dns current state
+played_record([], [], []).
+played_record([ground|Dps], [ground|Dns], [none|Record]) :-
+	played_record(Dps, Dns, Record).
+played_record([ground|Dps], [var|Dns], [unground|Record]) :-
+	throw(unground),
+	played_record(Dps, Dns, Record).
+played_record([var|Dps], [ground|Dns], [ground|Record]) :-
+	played_record(Dps, Dns, Record).
+played_record([var|Dps], [var|Dns], [none|Record]) :-
+	played_record(Dps, Dns, Record).
+
+
+% none_record(+Xs) :-
+% if day played_record is list of none predicat succeed 
+none_record([]).
+none_record([none|Xs]) :-
+	none_record(Xs).
+
+% day_state(+D, -NextState) :-
+% from current day D makes bitmap state ground|var which is returned in NextState
+day_state([], []).
+day_state([P|D], [var|NextState]) :- 
 	fd_var(P),
-	throw(ungrounded),
-	day_state(D, Dps, NextState).
-day_state([P|D], [grounded|Dps], [none|NextState]) :- 
+	day_state(D, NextState).
+day_state([P|D], [ground|NextState]) :- 
 	ground(P),
-	day_state(D, Dps, NextState).
-day_state([P|D], [ungrounded|Dps], [grounded|NextState]) :- 
-	ground(P),
-	day_state(D, Dps, NextState).
-day_state([P|D], [ungrounded|Dps], [none|NextState]) :- 
-	fd_var(P),
-	day_state(D, Dps, NextState).
-
+	day_state(D, NextState).
