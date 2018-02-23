@@ -104,7 +104,6 @@ clpfd:dispatch_global(pair_constrain(P), Sin, Sout, Actions) :-
 	gather_actions(P, InvalidValues, Actions).
 
 
-
 % gather_actions(+Attandance, +InvalidValues, -Actions) :-
 gather_actions([], [], []).
 gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
@@ -114,13 +113,15 @@ gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
 
 % gather_day_actions(D, DInvalids, Actions, LastAction) :-
 gather_day_actions([], [], Actions, Actions).
-gather_day_actions([P|D], [InvalidSet|DInvalids], [P in_set ReducedSet|Actions], LastAction) :-
-	(empty_fdset(InvalidSet) -> true
+gather_day_actions([P|D], [InvalidSet|DInvalids], Actions, LastAction) :-
+	(empty_fdset(InvalidSet) -> 
+	ActionsRest = Actions
 	;
 	fd_set(P, X),
-	fdset_subtract(X, InvalidSet, ReducedSet) 
+	fdset_subtract(X, InvalidSet, ReducedSet) ,
+	[P in_set ReducedSet|ActionsRest] = Actions
 	),
-	gather_day_actions(D, DInvalids, Actions, LastAction).
+	gather_day_actions(D, DInvalids, ActionsRest, LastAction).
 
 
 init_DaysDiffSets([], []).
@@ -134,22 +135,44 @@ init_DpDiffSets([_|D], [X|Xs]) :-
 	init_DpDiffSets(D, Xs).
 
 
+diff_cp([T]-T, Q-Q ).
+diff_cp([N|E]-E, [N|Ys]-Q) :- var(E), diff_cp(E-E, Ys-Q).
+diff_cp([N|Xs]-E, [N|Ys]-Q) :- Xs \= [], diff_cp(Xs-E, Ys-Q).
+
+diff_cat(X-Y, Y-YE, X-YE).
+diff_insert(X-Y, I, X-E) :- Y = [I|E].
+
+diff_cp_cat(X, Y, Z) :-
+	diff_cp(X, Q),
+	diff_cat(Q, Y, Z).
+
+diff_to_list(X-[], X).
+
+list_to_diff([], E-E).
+list_to_diff([X|Xs], [X|Ys]-E) :- list_to_diff(Xs, Ys-E).
+
+
 % invalidateDomains(+AttendanceDays, +PlayedRecord, -InvalidValues) :-
 invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
 	init_DaysDiffSets(AttendanceDays, InvalidValuesIn),
-	invalidateDomainsLoop(AttendanceDays, [], PlayedRecord, [], InvalidValuesIn, InvalidValues).
+	invalidateDomainsLoop(AttendanceDays, E-E, PlayedRecord, Q-Q, InvalidValuesIn, InvalidValues).
 
 
-% invalidateDomainsLoop(+AttendanceDays, []PairDays, +PlayedRecord, []PairsInvalidsBegin, +PairsInvalidEnd, -InvalidValues) :-
+% invalidateDomainsLoop(+AttendanceDays, [diff]PairDays, +PlayedRecord, [diff]PairsInvalidsBegin, +PairsInvalidEnd, -InvalidValues) :-
 % loop over AttandanceDays and update DayPairsInvalidValues if day was played
-invalidateDomainsLoop([], _, [], Begin, End, [Begin|End]).
+invalidateDomainsLoop([], _, [], Begin, [], X) :- diff_to_list(Begin, X).
 invalidateDomainsLoop([D|AttendanceDays], PairDays, [none|PlayedRecord], PairsInvalidsBegin, [DpInvalids|PairsInvalidEnd], InvalidValues) :-
 	% skip not played days
-	invalidateDomainsLoop(AttendanceDays, [PairDays|D], PlayedRecord, [PairsInvalidsBegin|DpInvalids], PairsInvalidEnd, InvalidValues).
+	diff_insert(PairDays, D, PairDaysOut), 
+	diff_insert(PairsInvalidsBegin, DpInvalids, K),
+	invalidateDomainsLoop(AttendanceDays, PairDaysOut, PlayedRecord, K, PairsInvalidEnd, InvalidValues).
 invalidateDomainsLoop([Dp|AttendanceDays], PairDays, [DpRecord|PlayedRecord], PairsInvalidsBegin, [DpInvalids|PairsInvalidEnd], InvalidValues) :-
 	DpRecord \= none,
-	invalidatePairs([PairDays|AttendanceDays], Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut),
-	invalidateDomainsLoop(AttendanceDays, [PairDays|Dp], PlayedRecord, [PairsInvalidsBeginOut|DpInvalidsOut], PairsInvalidEndOut, InvalidValues).
+	diff_cp_cat(PairDays, AttendanceDays, A),
+	diff_to_list(A),
+	invalidatePairs(A, Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut),
+	diff_insert(PairDays, Dp, B),
+	invalidateDomainsLoop(AttendanceDays, B, PlayedRecord, [PairsInvalidsBeginOut|DpInvalidsOut], PairsInvalidEndOut, InvalidValues).
 
 % invalidatePairs(+PairDays, +Dp, +DpRecord, +PairsInvalidsBegin, +DpInvalids, +PairsInvalidEnd, -PairsInvalidsBeginOut, -DpInvalidsOut, -PairsInvalidEndOut) :-
 % for all pairs p-Dp where p is from PairDays invalidate appropriate subtract fdsets
