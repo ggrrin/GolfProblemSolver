@@ -47,7 +47,7 @@
 golf(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
-	%group_size_satisfy(DaysAttendance, G, K),
+	group_size_satisfy(DaysAttendance, G, K),
 	testx(DaysAttendance),
 	labeling([],Variables).
 
@@ -110,7 +110,6 @@ clpfd:dispatch_global(testx(P), Sin, Sout, Actions) :-
 	;
 	Actions = []).
 
-moc(P) :- true.
 
 init_DaysDiffSets([], []).
 init_DaysDiffSets([D|AttandanceDays], [X|Xs]) :-
@@ -134,24 +133,24 @@ invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
 
 % invalidateDomainsLoop(+AttendanceDays, []PairDays, +PlayedRecord, []PairsInvalidsBegin, +PairsInvalidEnd, -InvalidValues) :-
 % loop over AttandanceDays and update DayPairsInvalidValues if day was played
-invalidateDomainsLoop([], _, [], Begin, End, [Begin|End]) :-
+invalidateDomainsLoop([], _, [], Begin, End, [Begin|End]).
 invalidateDomainsLoop([D|AttendanceDays], PairDays, [none|PlayedRecord], PairsInvalidsBegin, [DpInvalids|PairsInvalidEnd], InvalidValues) :-
 	% skip not played days
 	invalidateDomainsLoop(AttendanceDays, [PairDays|D], PlayedRecord, [PairsInvalidsBegin|DpInvalids], PairsInvalidEnd, InvalidValues).
 invalidateDomainsLoop([Dp|AttendanceDays], PairDays, [DpRecord|PlayedRecord], PairsInvalidsBegin, [DpInvalids|PairsInvalidEnd], InvalidValues) :-
 	DpRecord \= none,
-	invalidatePairs([PairDays|AttendanceDays], Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut)
+	invalidatePairs([PairDays|AttendanceDays], Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut),
 	invalidateDomainsLoop(AttendanceDays, [PairDays|Dp], PlayedRecord, [PairsInvalidsBeginOut|DpInvalidsOut], PairsInvalidEndOut, InvalidValues).
 
 invalidatePairs([], _, _, [], I, [], [], I, []).
 invalidatePairs([D|PairDays], Dp, DpRecord, [DInvalids|PairsInvalidsBegin], DpInvalids, PairsInvalidEnd, [DInvalidsOut|PairsInvalidsBeginOut], DpInvalidsOut, PairsInvalidEndOut) :-
 	% D days befor Dp
 	updateDayPairsInvalidValues(D, Dp, [], [], DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
-	invalidatePairs(PairDays, Dp, DpRecord, PairsInvalidsBegin, DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut)
-invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInvalidEnd], [], DpInvalidsOut, [DInvalidsOut|PairsInvalidEndOut) :-
+	invalidatePairs(PairDays, Dp, DpRecord, PairsInvalidsBegin, DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut).
+invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInvalidEnd], [], DpInvalidsOut, [DInvalidsOut|PairsInvalidEndOut]) :-
 	% D days after Dp
 	updateDayPairsInvalidValues(D, Dp, [], [], DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
-	invalidatePairs(PairDays, Dp, DpRecord, [], DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut)
+	invalidatePairs(PairDays, Dp, DpRecord, [], DpInvalidsOutX, PairsInvalidEnd, _, DpInvalidsOut, PairsInvalidEndOut).
 	
 
 % updateDayPairsInvalidValues(+D, +Dp, []DAc, []DpAc, +DpRecord, +InvalidValuesIn, +InvalidValues) :- 
@@ -168,14 +167,14 @@ updateDayPairsInvalidValues([Di|D], [DpI|Dp], DAc, DpAc, [none|DpRecord], Invali
 	%skip not played players
 	updateDayPairsInvalidValues(D, Dp, [DAc|Di], [DpAc|DpI], DpRecord, InvalidValuesIn, InvalidValues).
 updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [hit|DpRecord], [DInvalids|DpInvalids], InvalidValues) :- 
-	DDay = [DAc|Dn|D],
-	DpDay = [DpAc|DpN|Dp],
-	(fd_var(Dn) -> process_unboundN_actions([DpAc|none|Dp], DDay, Dn, DpN, DInvalids, DInvalidsOut), % C.
+	DDay = [DAc|[Dn|D]],
+	DpDay = [DpAc|[DpN|Dp]],
+	(fd_var(Dn) -> process_unboundN_actions([DpAc|[none|Dp]], DDay, Dn, DpN, DInvalids, DInvalidsOut), % C.
 	DpInvalidsOut = DpInvalids
 	;
 	process_boundN_actions(DpDay, DDay, Dn, DpN, DInvalids, DInvalidsOut), % A.
 	process_DpDiffSets(DDay, DpDay, DpN, Dn,  DpInvalids, DpInvalidsOut) % B.
-	).
+	),
 	%TODO fail actions
 	updateDayPairsInvalidValues(D, Dp, [DAc|Dn], [DpAc|DpN], DpRecord, [DInvalidsOut|DpInvalidsOut], InvalidValues).
 
@@ -229,16 +228,16 @@ process_DpDiffSets([DpI|Dp], [Di|D], Dn, DpN, [DpIDS|DpDiffSets], [DpIDSOut|DpDi
 
 % process_unboundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut) :-
 % add action removing all incompatible values of Dn
-process_unboundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut) :-
+process_unboundN_actions(Dp, D, DpN, DInvalids, DInvalidsOut) :-
 	empty_fdset(E),
 	get_Dn_invalid_values(Dp, D, DpN, E, DnDiffSet, DInvalids, DInvalidsOut, X-Y),
 	fdset_union(DnDiffSet, X, Y).
 
 
 % get_Dn_invalid_values(+Dp, +D, +DpN, +DiffSetIn, -DiffSetOut, +DInvalids, -DInvalidsOut, -X-Y) :-
-% gets invalid sets for Dn and subsequently updates DInvalidsOut and unifies Y as placeholder for X union invalids 
+% gets invalid sets for Dn and subsequently updates DInvalidsOut and unifies Y as placeholder for (X union invalids)
 get_Dn_invalid_values([], [], _, S, S, [], [], _).
-get_Dn_invalid_values([none|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [Y|DInvalidsOut], X-Y) :-
+get_Dn_invalid_values([none|Dp], [_|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [Y|DInvalidsOut], X-Y) :-
 	% jump over played column 
 	get_Dn_invalid_values(Dp, D,  DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], _). 
 get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], Y) :-
@@ -248,7 +247,7 @@ get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids
 get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], Y) :-
 	ground(DpI), ground(Di), DpN =:= DpI,
 	fdset_add_element(DiffSetIn, Di, DiffSetOutEn),
-	process_unboundN_actions(Dp, D,  DpN, DiffSetOutEn, DiffSetOut, DInvalids, DInvalidsOut, Y). 
+	get_Dn_invalid_values(Dp, D,  DpN, DiffSetOutEn, DiffSetOut, DInvalids, DInvalidsOut, Y). 
 
 
 	
