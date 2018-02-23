@@ -48,7 +48,7 @@ golf(DaysAttendance, N, K, G, D) :-
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
 	group_size_satisfy(DaysAttendance, G, K),
-	testx(DaysAttendance),
+	pair_constrain(DaysAttendance),
 	labeling([],Variables).
 
 build_model(N, D, DaysAttendance, Variables) :- build_model_ac(N, D, 0, DaysAttendance, Variables, []).
@@ -80,9 +80,9 @@ exactly(X, [Y|L], N) :-
 
 :- use_module(library(clpfd)).
 
-testx(P) :-
+pair_constrain(P) :-
 	suspensions(P, Suspensions),
-	fd_global(testx(P), empty, Suspensions).
+	fd_global(pair_constrain(P), empty, Suspensions).
 	
 				     
 suspensions([], []).
@@ -97,18 +97,29 @@ suspensions_day([P|Attendance], [val(P)|Suspensions], SLast) :-
 :- use_module(library(avl)).
 
 :- multifile clpfd:dispatch_global/4.
-clpfd:dispatch_global(testx(P), Sin, Sout, Actions) :-
-	%Actions = [],
-	%Sin = Sout,
-	%moc(P).
+clpfd:dispatch_global(pair_constrain(P), Sin, Sout, Actions) :-
+	next_grounded_state(P, Sin, Sout),
+	invalidateDomains(P, Sout, InvalidValues),
+	gather_actions(P, InvalidValues, Actions).
 
-	get_grounded_vars(P, Sin, Sout, GroundRec),
-	(ground(GroundRec) -> 
-	P = [D|_],
-	init_DpDiffSets(D, DpDiffSets),
-	get_actions(P, 1, GroundRec, DpDiffSets, Actions)
+
+
+% gather_actions(+Attandance, +InvalidValues, -Actions) :-
+gather_actions([], [], []).
+gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
+	gather_day_actions(D, DInvalids, Actions, LastAction),
+	gather_actions(Attandance, InvalidValues, LastAction).
+
+
+% gather_day_actions(D, DInvalids, Actions, LastAction) :-
+gather_day_actions([], [], Actions, Actions).
+gather_day_actions([P|D], [InvalidSet|DInvalids], [P in_set ReducedSet|Actions], LastAction) :-
+	(empty_fdset(InvalidSet) -> true
 	;
-	Actions = []).
+	fd_set(P, X),
+	fdset_subtract(X, InvalidSet, ReducedSet) 
+	),
+	gather_day_actions(D, DInvalids, Actions, LastAction).
 
 
 init_DaysDiffSets([], []).
@@ -121,9 +132,6 @@ init_DpDiffSets([_|D], [X|Xs]) :-
 	empty_fdset(X),
 	init_DpDiffSets(D, Xs).
 
-%day(Day,pl(DayIndex, PlayerIndex, PlayerGround)) :-
-%GroundRec storing played Day variable, index and
-% player variable and index
 
 % invalidateDomains(+AttendanceDays, +PlayedRecord, -InvalidValues) :-
 invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
@@ -252,83 +260,33 @@ get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids
 
 	
 % FOLLOWS FINDING OF READY GROUNDED 
-	
-get_grounded_vars(Attendance, PrevState, NextState, GroundRec) :- %DayIndex, PlayerIndex, PlayerGroup) :-
-	iterate_days(Attendance, PrevState, empty, NextState, 1, GroundRec). %pl(DayIndex, PlayerIndex, PlayerGroup).	
 
-iterate_days([], _, S, S, _, _).
-iterate_days([D|AttendanceDays], PrevState, NextStateIn, NextStateOut, DayIndex, GroundedRec) :-
-	iterate_day(D, PrevState, NextStateIn, NNextStateOut, DayIndex, 1, NGroundRec),
-	(ground(NGroundRec), pl(GRDay, _, _) = NGroundRec, GRDay =:= DayIndex ->
-	GroundedRec = day(D, NGroundRec) 
-	; GroundedRec = NGroundRec
-	),
-	NDayIndex is 1 + DayIndex,
-	iterate_days(AttendanceDays, PrevState, NNextStateOut, NextStateOut, NDayIndex, GroundedRec).
-	
-iterate_day([], _, S, S, _, _, _).
-iterate_day([P|Players], PrevState, NextStateIn, NextStateOut, CDayIndex, CPlayerIndex, GroundedRec) :-
-	log_state(P, p(CDayIndex,CPlayerIndex), NextStateIn, NNextStateOut, IsGrounded),
-	try_set_grounded(P, p(CDayIndex,CPlayerIndex), IsGrounded, PrevState, GroundedRec, CDayIndex, CPlayerIndex),
-	NCPlayerIndex is 1 + CPlayerIndex,
-	iterate_day(Players, PrevState, NNextStateOut, NextStateOut, CDayIndex, NCPlayerIndex, GroundedRec). 
+% next_grounded_state(Attendance, PrevState, NextState) :-
+next_grounded_state([], [], []).
+next_grounded_state([D|Attendance], [Dps|PrevState], [Dns|NextState]) :-
+	day_state(D, Dps, DnsX),
+	normalize_state(DnsX, [], Dns),
+	next_grounded_state(Attendance, PrevState, NextState).
 
-log_state(P, Coor, StateIn, StateOut, IsGrounded) :-
-	(fd_var(P) -> IsGrounded = 0 ; IsGrounded = 1),
-	avl_incr(Coor, StateIn, IsGrounded, StateOut).
+normalize_state([], none).
+normalize_state([none|Xs], Ac, Res) :-
+	normalize_state(Xs, [Ac|none], Res).
+normalize_state([grounded|Xs], Ac, [Ac|[grounded|Xs]]).
+normalize_state([ungrounded|Xs], Ac, [Ac|[grounded|Xs]]).
 
-try_set_grounded(_, _, 0, _, _, _, _).
-try_set_grounded(_, _, 1, _, GR, _, _) :- ground(GR).
-try_set_grounded(P, Coor, 1, PrevState, GroundedRec, CDayIndex, CPlayerIndex) :- var(GroundedRec),
-	avl_fetch(Coor, PrevState, PrevVal), (PrevVal =:= 0 ->
-	GroundedRec = pl(CDayIndex, CPlayerIndex, P);true).
-	
-			
-% the entrypoint
-% exactly(I, Xs, N) :-
-% 	dom_suspensions(Xs, Susp),
-% 	fd_global(exactly(I,Xs,N), state(Xs,N), Susp).
-% 
-% 
-% :- multifile clpfd:dispatch_global/4.
-% clpfd:dispatch_global(exactly(I,_,_), state(Xs0,N0), state(Xs,N), Actions) :-
-% 	exactly_solver(I, Xs0, Xs, N0, N, Actions).
-% 
-% exactly_solver(I, Xs0, Xs, N0, N, Actions) :-
-% 	ex_filter(Xs0, Xs, N0, N, I),
-% 	length(Xs, M),
-% 	(   N=:=0 -> Actions = [exit|Ps], ex_neq(Xs, I, Ps)
-% 	;   N=:=M -> Actions = [exit|Ps], ex_eq(Xs, I, Ps)
-% 	;   N>0, N<M -> Actions = []
-% 	;   Actions = [fail]
-% 	).
-% 
-% % exactly.pl
-% % rules [1,2]: filter the X's, decrementing N
-% ex_filter([], [], N, N, _).  % ex_filter([X|Xs], Ys, L, N, I) :- X==I, !, % 	M is L-1,
-% 	ex_filter(Xs, Ys, M, N, I).
-% 
-% ex_filter([X|Xs], Ys0, L, N, I) :-
-% 	fd_set(X, Set),
-% 	fdset_member(I, Set), !,
-% 	Ys0 = [X|Ys],
-% 	ex_filter(Xs, Ys, L, N, I).
-% 
-% ex_filter([_|Xs], Ys, L, N, I) :-
-% 	ex_filter(Xs, Ys, L, N, I).
-% 
-% % rule [3]: all must be neq I
-% ex_neq(Xs, I, Ps) :-
-% 	fdset_singleton(Set0, I),
-% 	fdset_complement(Set0, Set),
-% 	eq_all(Xs, Set, Ps).
-% 
-% % rule [4]: all must be eq I
-% ex_eq(Xs, I, Ps) :-
-% 	fdset_singleton(Set, I),
-% 	eq_all(Xs, Set, Ps).
-% 
-% eq_all([], _, []).
-% eq_all([X|Xs], Set, [X in_set Set|Ps]) :-
-% 	eq_all(Xs, Set, Ps).
-% 
+% day_state(+D, +Dps, -NextState) :- 
+day_state([], [], []).
+day_state([P|D], [grounded|Dps], [ungrounded|NextState]) :- 
+	fd_var(P),
+	throw(ungrounded),
+	day_state(D, Dps, NextState).
+day_state([P|D], [grounded|Dps], [none|NextState]) :- 
+	ground(P),
+	day_state(D, Dps, NextState).
+day_state([P|D], [ungrounded|Dps], [grounded|NextState]) :- 
+	ground(P),
+	day_state(D, Dps, NextState).
+day_state([P|D], [ungrounded|Dps], [none|NextState]) :- 
+	fd_var(P),
+	day_state(D, Dps, NextState).
+
