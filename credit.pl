@@ -71,7 +71,28 @@ golf(DaysAttendance, N, K, G, D) :-
 	domain(Variables, 1, G),
 	group_size_satisfy(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
+	lex_chain(DaysAttendance),
 	labeling([],Variables).
+
+golf_t(T, DaysAttendance, N, K, G, D) :- 
+	statistics(runtime,[Start|_]),
+	golf(DaysAttendance, N, K, G, D),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
+
+golf_all(DaysAttendance, N, K, G, D) :- 
+	build_model(N, D, DaysAttendance, Variables),
+	domain(Variables, 1, G),
+	group_size_satisfy(DaysAttendance, G, K),
+	pair_constrain(DaysAttendance),
+	labeling([],Variables).
+
+
+golf_all_t(T, DaysAttendance, N, K, G, D) :- 
+	statistics(runtime,[Start|_]),
+	golf_all(DaysAttendance, N, K, G, D),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
 
 build_model(N, D, DaysAttendance, Variables) :- build_model_ac(N, D, 0, DaysAttendance, Variables, []).
 build_model_ac(_, D, D, [], V, V).
