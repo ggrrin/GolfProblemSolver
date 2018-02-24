@@ -24,7 +24,7 @@
 % 
 % (A)
 % 5^20 k
-% (1) podminka: kazda skupina ma prave 4 hrace
+% (1) podminka: kazda skupina ma prave k hrace
 % 
 % (B)
 % 20^20
@@ -43,8 +43,17 @@
 % g = 2
 % d = 3 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Helper testing predicates 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 test(DaysAttendance) :-
 	golf(DaysAttendance, 4, 2, 2, 2).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Social Golf problem CSP model 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 golf(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
@@ -64,6 +73,11 @@ build_day(N, [_|Players], Nc) :- Nc < N,
 	Ncc is Nc + 1, 
 	build_day(N, Players, Ncc).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Equal sized groups constrain implementation 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 group_size_satisfy([], _, _).
 group_size_satisfy([D|PlayerGroupAssignments], G, N) :- 
 	group_size_satisfy_day(1, D, G, N),
@@ -80,6 +94,9 @@ exactly(X, [Y|L], N) :-
         N #= M+B,
         exactly(X, L, M).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Global pairs constrain implementation 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pair_constrain(P) :-
 	suspensions(P, Suspensions),
@@ -124,6 +141,17 @@ gather_day_actions([P|D], [InvalidSet|DInvalids], Actions, LastAction) :-
 	gather_day_actions(D, DInvalids, ActionsRest, LastAction).
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Iteration over all grounded vars and executing their invalidation 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% invalidateDomains(+AttendanceDays, +PlayedRecord, -InvalidValues) :-
+invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
+	init_DaysDiffSets(AttendanceDays, InvalidValuesIn),
+	invalidateDomainsLoop(AttendanceDays, E-E, PlayedRecord, Q-Q, InvalidValuesIn, InvalidValues).
+
+% init_DaysDiffSets([D|AttandanceDays], [X|Xs]) :-
+% for each domain variable initialize fdset for invalid values
 init_DaysDiffSets([], []).
 init_DaysDiffSets([D|AttandanceDays], [X|Xs]) :-
 	init_DpDiffSets(D, X),
@@ -133,37 +161,6 @@ init_DpDiffSets([], []).
 init_DpDiffSets([_|D], [X|Xs]) :-
 	empty_fdset(X),
 	init_DpDiffSets(D, Xs).
-
-
-% https://johnwickerson.wordpress.com/2009/01/22/implementing-difference-lists-in-prolog/
-diff_cp(T-T1, Q-Q ) :- unify_with_occurs_check(T,T1).
-diff_cp([N|Xs]-E, [N|Ys]-Q) :- \+ unify_with_occurs_check([N|Xs], E), diff_cp(Xs-E, Ys-Q).
-
-
-diff_cat(X-Y, Y-YE, X-YE).
-
-diff_catL(X-Y, Y, X).
-
-diff_insert(X-Y, I, X-E) :- Y = [I|E].
-
-diff_cp_cat(X, Y, Z) :-
-	diff_cp(X, Q),
-	diff_cat(Q, Y, Z).
-
-diff_cp_catL(X, Y, Z) :-
-	diff_cp(X, Q),
-	diff_catL(Q, Y, Z).
-
-diff_to_list(X-[], X).
-
-list_to_diff([], E-E).
-list_to_diff([X|Xs], [X|Ys]-E) :- list_to_diff(Xs, Ys-E).
-
-
-% invalidateDomains(+AttendanceDays, +PlayedRecord, -InvalidValues) :-
-invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
-	init_DaysDiffSets(AttendanceDays, InvalidValuesIn),
-	invalidateDomainsLoop(AttendanceDays, E-E, PlayedRecord, Q-Q, InvalidValuesIn, InvalidValues).
 
 
 % invalidateDomainsLoop(+AttendanceDays, [diff]PairDays, +PlayedRecord, [diff]PairsInvalidsBegin, +PairsInvalidEnd, -InvalidValues) :-
@@ -226,19 +223,11 @@ updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DI
 	diff_insert(DpAc, DpN, DpAcOut), % [DpAc|DpN]
 	updateDayPairsInvalidValues(D, Dp, DAcOut, DpAcOut, DpRecord, [DInvalidsOut|DpInvalidsOut], InvalidValues).
 	%TODO fail actions
+	
 
-% create_DpActions(+Dp, +DpDiffSets, +Actions) :-
-% create actions subtracting all invalid fdsets values from Dp
-create_DpActions([], [], []).
-create_DpActions([D|Dp], [_|DpDiffSets], Actions) :-
-	ground(D),
-	create_DpActions(Dp, DpDiffSets, Actions).
-create_DpActions([D|Dp], [Diff|DpDiffSets], [D in_set ReducedSet|Actions]) :-
-	fd_var(D),
-	fd_set(D, Set), 
-	fdset_subtract(Set, Diff, ReducedSet),
-	create_DpActions(Dp, DpDiffSets, Actions).
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 2 types of propagation techniques A, B, C (A, B are symetric)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % process_boundN_actions(+Dp, +D, +Dn, +DpN, +DInvalids, -DInvalidsOut) :-
 % add incompatible domain values of D to DInvalids and returns in DInvalidsOut 
@@ -284,8 +273,9 @@ get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut) :-
 	fdset_add_element(DiffSetIn, Di, DiffSetOutEn),
 	get_Dn_invalid_values(Dp, D,  DpN, DiffSetOutEn, DiffSetOut). 
 
-
-	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Finding changes in variable assignments between pair_constrain calls
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % next_grounded_state(+Attendance, +PrevState, -NextState, -PlayedRecord) :-
 % from current days Attandance and PrevState creates NextState and PlayedRecord
@@ -334,3 +324,33 @@ day_state([P|D], [var|NextState]) :-
 day_state([P|D], [ground|NextState]) :- 
 	ground(P),
 	day_state(D, NextState).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Diff list hlepers 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% https://johnwickerson.wordpress.com/2009/01/22/implementing-difference-lists-in-prolog/
+diff_cp(T-T1, Q-Q ) :- unify_with_occurs_check(T,T1).
+diff_cp([N|Xs]-E, [N|Ys]-Q) :- \+ unify_with_occurs_check([N|Xs], E), diff_cp(Xs-E, Ys-Q).
+
+
+diff_cat(X-Y, Y-YE, X-YE).
+
+diff_catL(X-Y, Y, X).
+
+diff_insert(X-Y, I, X-E) :- Y = [I|E].
+
+diff_cp_cat(X, Y, Z) :-
+	diff_cp(X, Q),
+	diff_cat(Q, Y, Z).
+
+diff_cp_catL(X, Y, Z) :-
+	diff_cp(X, Q),
+	diff_catL(Q, Y, Z).
+
+diff_to_list(X-[], X).
+
+list_to_diff([], E-E).
+list_to_diff([X|Xs], [X|Ys]-E) :- list_to_diff(Xs, Ys-E).
+
+
