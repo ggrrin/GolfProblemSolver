@@ -50,6 +50,17 @@
 test(DaysAttendance) :-
 	golf(DaysAttendance, 4, 2, 2, 2).
 
+test1(S,Ac) :-
+	domain([A,B,C], 1, 2),
+	pair_constrain_body([[1,1,2,2],[1,A,B,C]], [[ground,ground,ground,ground],[var, var, var, var]], S, Ac).
+
+test2(Z) :-
+	domain([A,B,C], 1, 2),
+	process_boundN_actions([1,1,2,2], [1,A,B,C], 1, 1, [[],[],[],[]], Z).
+
+test3(Z) :-
+	domain([A,B,C], 1, 2),
+	process_boundN_actions([1,A,B,C], [1,1,2,2], 1, 1, [[],[],[],[]], Z).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Social Golf problem CSP model 
@@ -116,6 +127,9 @@ suspensions_day([P|Attendance], [val(P)|Suspensions], SLast) :-
 
 :- multifile clpfd:dispatch_global/4.
 clpfd:dispatch_global(pair_constrain(P), Sin, Sout, Actions) :-
+	pair_constrain_body(P, Sin, Sout, Actions).
+
+pair_constrain_body(P, Sin, Sout, Actions) :-
 	next_grounded_state(P, Sin, Sout, PlayedRecord),
 	invalidateDomains(P, PlayedRecord, InvalidValues),
 	gather_actions(P, InvalidValues, Actions).
@@ -235,12 +249,12 @@ updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DI
 % DpN player assignment in played day player
 % Dn player assgnment in other day player
 process_boundN_actions([], [], _, _, [], []).
-process_boundN_actions([DpI|Dp], [Di|D], Dn, DpN, [X|DInvalids], [X|DInvalidsOut] ) :- %skip
-	(fd_var(DpI); DpI =\= DpN; ground(Di)), 
-	process_boundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut).
 process_boundN_actions([DpI|Dp], [Di|D], Dn, DpN, [X|DInvalids], [Y|DInvalidsOut] ) :-
-	ground(DpI), DpI =:= DpN, fd_var(Di), %played index is not var thus gonna fail 
-	fdset_add_element(X, Dn, Y),
+	( (ground(DpI), DpI == DpN, fd_var(Di)) ->  %played index is not var thus gonna fail 
+	fdset_add_element(X, Dn, Y)
+	;
+	X=Y
+	),
 	process_boundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut).
 	
 
@@ -265,12 +279,12 @@ set_Dn_DiffSet([_|DAc]-E, Q, [X|DInvalids], [X|DInvalidsOut]) :-
 % gets invalid sets for Dn 
 get_Dn_invalid_values([], [], _, S, S).
 get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut) :-
+	( (ground(DpI), ground(Di), DpN =:= DpI) ->
+	fdset_add_element(DiffSetIn, Di, DiffSetOutEn)
+	;
 	% jump over columns with at least one not grounded cell
-	(fd_var(DpI); fd_var(Di)),
-	get_Dn_invalid_values(Dp, D,  DpN, DiffSetIn, DiffSetOut). 
-get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut) :-
-	ground(DpI), ground(Di), DpN =:= DpI,
-	fdset_add_element(DiffSetIn, Di, DiffSetOutEn),
+	DiffSetOutEn = DiffSetIn
+	),
 	get_Dn_invalid_values(Dp, D,  DpN, DiffSetOutEn, DiffSetOut). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
