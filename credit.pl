@@ -135,16 +135,24 @@ init_DpDiffSets([_|D], [X|Xs]) :-
 	init_DpDiffSets(D, Xs).
 
 
-diff_cp([T]-T, Q-Q ).
-diff_cp([N|E]-E, [N|Ys]-Q) :- var(E), diff_cp(E-E, Ys-Q).
-diff_cp([N|Xs]-E, [N|Ys]-Q) :- Xs \= [], diff_cp(Xs-E, Ys-Q).
+% https://johnwickerson.wordpress.com/2009/01/22/implementing-difference-lists-in-prolog/
+diff_cp(T-T1, Q-Q ) :- unify_with_occurs_check(T,T1).
+diff_cp([N|Xs]-E, [N|Ys]-Q) :- \+ unify_with_occurs_check([N|Xs], E), diff_cp(Xs-E, Ys-Q).
+
 
 diff_cat(X-Y, Y-YE, X-YE).
+
+diff_catL(X-Y, Y, X).
+
 diff_insert(X-Y, I, X-E) :- Y = [I|E].
 
 diff_cp_cat(X, Y, Z) :-
 	diff_cp(X, Q),
 	diff_cat(Q, Y, Z).
+
+diff_cp_catL(X, Y, Z) :-
+	diff_cp(X, Q),
+	diff_catL(Q, Y, Z).
 
 diff_to_list(X-[], X).
 
@@ -168,26 +176,28 @@ invalidateDomainsLoop([D|AttendanceDays], PairDays, [none|PlayedRecord], PairsIn
 	invalidateDomainsLoop(AttendanceDays, PairDaysOut, PlayedRecord, K, PairsInvalidEnd, InvalidValues).
 invalidateDomainsLoop([Dp|AttendanceDays], PairDays, [DpRecord|PlayedRecord], PairsInvalidsBegin, [DpInvalids|PairsInvalidEnd], InvalidValues) :-
 	DpRecord \= none,
-	diff_cp_cat(PairDays, AttendanceDays, A),
-	diff_to_list(A),
+	diff_cp_catL(PairDays, AttendanceDays, A),
 	invalidatePairs(A, Dp, DpRecord, PairsInvalidsBegin, DpInvalids, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut),
 	diff_insert(PairDays, Dp, B),
-	invalidateDomainsLoop(AttendanceDays, B, PlayedRecord, [PairsInvalidsBeginOut|DpInvalidsOut], PairsInvalidEndOut, InvalidValues).
+	diff_insert(PairsInvalidsBeginOut, DpInvalidsOut, C), % [PairsInvalidsBeginOut|DpInvalidsOut]
+	invalidateDomainsLoop(AttendanceDays, B, PlayedRecord, C, PairsInvalidEndOut, InvalidValues).
 
-% invalidatePairs(+PairDays, +Dp, +DpRecord, +PairsInvalidsBegin, +DpInvalids, +PairsInvalidEnd, -PairsInvalidsBeginOut, -DpInvalidsOut, -PairsInvalidEndOut) :-
+% invalidatePairs(+PairDays, +Dp, +DpRecord, +[diff]PairsInvalidsBegin, +DpInvalids, +PairsInvalidEnd, -[diff]PairsInvalidsBeginOut, -DpInvalidsOut, -PairsInvalidEndOut) :-
 % for all pairs p-Dp where p is from PairDays invalidate appropriate subtract fdsets
-invalidatePairs([], _, _, [], I, [], [], I, []).
-invalidatePairs([D|PairDays], Dp, DpRecord, [DInvalids|PairsInvalidsBegin], DpInvalids, PairsInvalidEnd, [DInvalidsOut|PairsInvalidsBeginOut], DpInvalidsOut, PairsInvalidEndOut) :-
+invalidatePairs([], _, _, _, I, _, Q-Q, I, []).
+invalidatePairs([D|PairDays], Dp, DpRecord, [DInvalids|PairsInvalidsBegin]-E, DpInvalids, PairsInvalidEnd, [DInvalidsOut|PairsInvalidsBeginOut]-Q, DpInvalidsOut, PairsInvalidEndOut) :-
 	% D days before Dp
-	updateDayPairsInvalidValues(D, Dp, [], [], DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
-	invalidatePairs(PairDays, Dp, DpRecord, PairsInvalidsBegin, DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut, DpInvalidsOut, PairsInvalidEndOut).
-invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInvalidEnd], [], DpInvalidsOut, [DInvalidsOut|PairsInvalidEndOut]) :-
+	\+ unify_with_occurs_check([DInvalids|PairsInvalidsBegin], E),
+	updateDayPairsInvalidValues(D, Dp, F-F, C-C, DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
+	invalidatePairs(PairDays, Dp, DpRecord, PairsInvalidsBegin-E, DpInvalidsOutX, PairsInvalidEnd, PairsInvalidsBeginOut-Q, DpInvalidsOut, PairsInvalidEndOut).
+invalidatePairs([D|PairDays], Dp, DpRecord, E-E1, DpInvalids, [DInvalids|PairsInvalidEnd], Q-Q, DpInvalidsOut, [DInvalidsOut|PairsInvalidEndOut]) :-
 	% D days after Dp
-	updateDayPairsInvalidValues(D, Dp, [], [], DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
-	invalidatePairs(PairDays, Dp, DpRecord, [], DpInvalidsOutX, PairsInvalidEnd, _, DpInvalidsOut, PairsInvalidEndOut).
+	unify_with_occurs_check(E,E1),
+	updateDayPairsInvalidValues(D, Dp, F-F, C-C, DpRecord, [DInvalids|DpInvalids], [DInvalidsOut|DpInvalidsOutX]),
+	invalidatePairs(PairDays, Dp, DpRecord, E-E1, DpInvalidsOutX, PairsInvalidEnd, _, DpInvalidsOut, PairsInvalidEndOut).
 	
 
-% updateDayPairsInvalidValues(+D, +Dp, []DAc, []DpAc, +DpRecord, +InvalidValuesIn, +InvalidValues) :- 
+% updateDayPairsInvalidValues(+D, +Dp, +[diff]DAc, +[diff]DpAc, +DpRecord, +InvalidValuesIn, +InvalidValues) :- 
 % for each player selected in DpRecord invalid values computation is done
 % D other day to process
 % Dp played day to process
@@ -199,18 +209,23 @@ invalidatePairs([D|PairDays], Dp, DpRecord, [], DpInvalids, [DInvalids|PairsInva
 updateDayPairsInvalidValues([], [], _, _, [], X, X).
 updateDayPairsInvalidValues([Di|D], [DpI|Dp], DAc, DpAc, [none|DpRecord], InvalidValuesIn, InvalidValues) :- 
 	%skip not played players
-	updateDayPairsInvalidValues(D, Dp, [DAc|Di], [DpAc|DpI], DpRecord, InvalidValuesIn, InvalidValues).
+	diff_insert(DAc, Di, DAcOut), %[DAc|Di]
+	diff_insert(DpAc, DpI, DpAcOut), %[DpAc|DpI]
+	updateDayPairsInvalidValues(D, Dp, DAcOut, DpAcOut, DpRecord, InvalidValuesIn, InvalidValues).
 updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DInvalids|DpInvalids], InvalidValues) :- 
-	DDay = [DAc|[Dn|D]],
-	DpDay = [DpAc|[DpN|Dp]],
-	(fd_var(Dn) -> process_unboundN_actions([DpAc|[none|Dp]], DDay, Dn, DpN, DInvalids, DInvalidsOut), % C.
+	diff_cp_catL(DAc, [Dn|D], DDay), % DDay = [DAc|[Dn|D]],
+	diff_cp_catL(DpAc,[DpN|Dp], DpDay), % DpDay = [DpAc|[DpN|Dp]],
+	(fd_var(Dn) ->  process_unboundN_actions(DpDay, DDay, DAc, DpN, DInvalids, DInvalidsOut), % C.
 	DpInvalidsOut = DpInvalids
 	;
 	process_boundN_actions(DpDay, DDay, Dn, DpN, DInvalids, DInvalidsOut), % A.
-	process_DpDiffSets(DDay, DpDay, DpN, Dn,  DpInvalids, DpInvalidsOut) % B.
+	process_boundN_actions(DDay, DpDay, DpN, Dn, DInvalidsOut, DpInvalidsOut) % B.
+%	process_DpDiffSets(DDay, DpDay, DpN, Dn,  DpInvalids, DpInvalidsOut) % B.
 	),
+	diff_insert(DAc, Dn, DAcOut), % [DAc|Dn]
+	diff_insert(DpAc, DpN, DpAcOut), % [DpAc|DpN]
+	updateDayPairsInvalidValues(D, Dp, DAcOut, DpAcOut, DpRecord, [DInvalidsOut|DpInvalidsOut], InvalidValues).
 	%TODO fail actions
-	updateDayPairsInvalidValues(D, Dp, [DAc|Dn], [DpAc|DpN], DpRecord, [DInvalidsOut|DpInvalidsOut], InvalidValues).
 
 % create_DpActions(+Dp, +DpDiffSets, +Actions) :-
 % create actions subtracting all invalid fdsets values from Dp
@@ -223,15 +238,6 @@ create_DpActions([D|Dp], [Diff|DpDiffSets], [D in_set ReducedSet|Actions]) :-
 	fd_set(D, Set), 
 	fdset_subtract(Set, Diff, ReducedSet),
 	create_DpActions(Dp, DpDiffSets, Actions).
-
-
-%find_dN_var(+Day, +CIndex, +PlayerIndex, -Dn) :-
-% returns variable at PlayerIndex in Res
-find_dN_var([P|_], PlayerIndex, PlayerIndex, P).
-find_dN_var([_|D], CIndex, PlayerIndex, Res) :- 
-	CIndex =\= PlayerIndex,
-	NCIndex is 1 + CIndex,
-	find_dN_var(D, NCIndex, PlayerIndex, Res). 
 
 
 % process_boundN_actions(+Dp, +D, +Dn, +DpN, +DInvalids, -DInvalidsOut) :-
@@ -248,40 +254,35 @@ process_boundN_actions([DpI|Dp], [Di|D], Dn, DpN, [X|DInvalids], [Y|DInvalidsOut
 	fdset_add_element(X, Dn, Y),
 	process_boundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut).
 	
-% process_DpDiffSets(+D, +Dp, +DpN, +Dn,  +DpDiffSets, -DpDiffSetsOut) :-
-% adds to DpDiffSets incompatible values
-process_DpDiffSets([], [], _, _, [], []).
-process_DpDiffSets([DpI|Dp], [Di|D], Dn, DpN, [X|DpDiffSets], [X|DpDiffSetsOut]) :- %skip
-	(fd_var(Di); Di =\= Dn; ground(DpI)), 
-	process_DpDiffSets(Dp, D, Dn, DpN, DpDiffSets, DpDiffSetsOut).
-process_DpDiffSets([DpI|Dp], [Di|D], Dn, DpN, [DpIDS|DpDiffSets], [DpIDSOut|DpDiffSetsOut]) :-
-	ground(Di), Di =:= Dn, fd_var(DpI), %played index is not var thus gonna fail
-	fdset_add_element(DpIDS, DpN, DpIDSOut),
-	process_DpDiffSets(Dp, D, Dn, DpN, DpDiffSets, DpDiffSetsOut).
 
-
-% process_unboundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut) :-
+% process_unboundN_actions(Dp, D, DAc, DpN, DInvalids, DInvalidsOut) :-
 % add action removing all incompatible values of Dn
-process_unboundN_actions(Dp, D, DpN, DInvalids, DInvalidsOut) :-
+process_unboundN_actions(Dp, D, DAc, DpN, DInvalids, DInvalidsOut) :-
 	empty_fdset(E),
-	get_Dn_invalid_values(Dp, D, DpN, E, DnDiffSet, DInvalids, DInvalidsOut, X-Y),
-	fdset_union(DnDiffSet, X, Y).
+	get_Dn_invalid_values(Dp, D, DpN, E, DnDiffSet),
+	set_Dn_DiffSet(DAc, DnDiffSet, DInvalids, DInvalidsOut).
 
 
-% get_Dn_invalid_values(+Dp, +D, +DpN, +DiffSetIn, -DiffSetOut, +DInvalids, -DInvalidsOut, -X-Y) :-
-% gets invalid sets for Dn and subsequently updates DInvalidsOut and unifies Y as placeholder for (X union invalids)
-get_Dn_invalid_values([], [], _, S, S, [], [], _).
-get_Dn_invalid_values([none|Dp], [_|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [Y|DInvalidsOut], X-Y) :-
-	% jump over played column 
-	get_Dn_invalid_values(Dp, D,  DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], _). 
-get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], Y) :-
+% set_Dn_DiffSet(DAc, Q, DInvalids, DInvalidsOut) :-
+set_Dn_DiffSet(E-E1, Q, [X|DInvalids], [Y|DInvalids]) :-
+	unify_with_occurs_check(E, E1),
+	fdset_union(X, Q, Y).
+set_Dn_DiffSet([_|DAc]-E, Q, [X|DInvalids], [X|DInvalidsOut]) :-
+	\+ unify_with_occurs_check([_|DAc], E),
+	set_Dn_DiffSet(DAc-E, Q, DInvalids, DInvalidsOut).
+
+
+% get_Dn_invalid_values(+Dp, +D, +DpN, +DiffSetIn, -DiffSetOut ) :-
+% gets invalid sets for Dn 
+get_Dn_invalid_values([], [], _, S, S).
+get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut) :-
 	% jump over columns with at least one not grounded cell
 	(fd_var(DpI); fd_var(Di)),
-	get_Dn_invalid_values(Dp, D,  DpN, DiffSetIn, DiffSetOut, DInvalids, DInvalidsOut, Y). 
-get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut, [X|DInvalids], [X|DInvalidsOut], Y) :-
+	get_Dn_invalid_values(Dp, D,  DpN, DiffSetIn, DiffSetOut). 
+get_Dn_invalid_values([DpI|Dp], [Di|D], DpN, DiffSetIn, DiffSetOut) :-
 	ground(DpI), ground(Di), DpN =:= DpI,
 	fdset_add_element(DiffSetIn, Di, DiffSetOutEn),
-	get_Dn_invalid_values(Dp, D,  DpN, DiffSetOutEn, DiffSetOut, DInvalids, DInvalidsOut, Y). 
+	get_Dn_invalid_values(Dp, D,  DpN, DiffSetOutEn, DiffSetOut). 
 
 
 	
