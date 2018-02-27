@@ -62,6 +62,19 @@ test3(Z) :-
 	domain([A,B,C], 1, 2),
 	process_boundN_actions([1,A,B,C], [1,1,2,2], 1, 1, [[],[],[],[]], Z).
 
+golf_t(T, DaysAttendance, N, K, G, D) :- 
+	statistics(runtime,[Start|_]),
+	golf(DaysAttendance, N, K, G, D),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
+
+golf_all_t(T, DaysAttendance, N, K, G, D) :- 
+	statistics(runtime,[Start|_]),
+	golf_all(DaysAttendance, N, K, G, D),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Social Golf problem CSP model 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,25 +87,12 @@ golf(DaysAttendance, N, K, G, D) :-
 	lex_chain(DaysAttendance),
 	labeling([],Variables).
 
-golf_t(T, DaysAttendance, N, K, G, D) :- 
-	statistics(runtime,[Start|_]),
-	golf(DaysAttendance, N, K, G, D),
-	statistics(runtime,[Stop|_]),
-	T is Stop - Start.
-
 golf_all(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
 	group_size_satisfy(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
 	labeling([],Variables).
-
-
-golf_all_t(T, DaysAttendance, N, K, G, D) :- 
-	statistics(runtime,[Start|_]),
-	golf_all(DaysAttendance, N, K, G, D),
-	statistics(runtime,[Stop|_]),
-	T is Stop - Start.
 
 build_model(N, D, DaysAttendance, Variables) :- build_model_ac(N, D, 0, DaysAttendance, Variables, []).
 build_model_ac(_, D, D, [], V, V).
