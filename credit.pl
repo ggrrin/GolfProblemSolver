@@ -82,7 +82,7 @@ golf_all_t(T, DaysAttendance, N, K, G, D) :-
 golf(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
-	group_size_satisfy(DaysAttendance, G, K),
+	group_size_constrain(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
 	lex_chain(DaysAttendance),
 	labeling([],Variables).
@@ -90,7 +90,7 @@ golf(DaysAttendance, N, K, G, D) :-
 golf_all(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
-	group_size_satisfy(DaysAttendance, G, K),
+	group_size_constrain(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
 	labeling([],Variables).
 
@@ -110,16 +110,23 @@ build_day(N, [_|Players], Nc) :- Nc < N,
 %% Equal sized groups constrain implementation 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-group_size_satisfy([], _, _).
-group_size_satisfy([D|PlayerGroupAssignments], G, N) :- 
-	group_size_satisfy_day(1, D, G, N),
-	group_size_satisfy(PlayerGroupAssignments, G, N). 
+% group_size_constrain(+Days, +G, +K) :- 
+% For each day in Days ensures that each group in 1..G has K members 
+group_size_constrain([], _, _).
+group_size_constrain([D|PlayerGroupAssignments], G, K) :- 
+	group_size_constrain_day(1, D, G, K),
+	group_size_constrain(PlayerGroupAssignments, G, K). 
 
-group_size_satisfy_day(G, D, G, N) :- exactly(G, D, N).
-group_size_satisfy_day(Gc, D, G, N) :- Gc < G,
-	exactly(Gc, D, N), Gcc is Gc + 1,
-	group_size_satisfy_day(Gcc, D, G, N).
+% group_size_constrain_day(+Gc, +D, +G, +K) :- for each group 1..G ensures 
+% that is in day D K times 
+group_size_constrain_day(G, D, G, K) :- exactly(G, D, K).
+group_size_constrain_day(Gc, D, G, K) :- Gc < G,
+	exactly(Gc, D, K), Gcc is Gc + 1,
+	group_size_constrain_day(Gcc, D, G, K).
 
+
+% exactly(+X, +L, +N) :- constrains that element X
+% should be in t list L N times.
 exactly(_, [], 0).
 exactly(X, [Y|L], N) :-
         X #= Y #<=> B,
