@@ -20,6 +20,13 @@
 	\end{definition}
 }
 
+\newcommand{\mins}[2]{
+	\theoremstyle{remark}
+	\begin{remark}{#1}
+	#2
+	\end{remark}
+}
+
 \def \golf {Golf Problem Solver}
 
 \renewcommand{\abstractname}{\golf}
@@ -96,6 +103,14 @@ But lets first define following simple notation.
 		is in at most 1 group.  $$ \forall x,y \in [N]: |\{S | \exists i \in [D] \land \exists j \in [G]: x \in S_{i,j} \land y \in S_{i,j}\}| < 2 $$
 	\end{enumerate}  
 }
+
+
+
+\mins{}{ 
+We can see that conditions \ref{groups-size} and \ref{once-per-day} implies that:
+$$ N = G*K. $$
+}\label{insight}
+
 
 In following section our task is going to be to choose proper representation for this model in terms of CSP.
 
@@ -181,16 +196,30 @@ Each variable $V_i$ can be assigned by $2$ domain values and there is
 $D*G*N$ of such variables thus estimate is:
 $$2^{D*G*N}.$$
 
+\subsubsection{Worst case estimate $M_a$ vs $M_b$}
+Lets try to find out for, which $N$ and $G$ is $M_b$ model better.
+$$2^{D*G*N} < 2^{\log_2{(N)}*D*G*K}$$
+$$D*G*N < \log_2{(N)}*D*G*K$$
+$$ N < \log_2{(N)}*K$$
+Using remark from \ref{insight} $N = G*K$.
+$$ K*G < \log_2{(N)}*K$$
+$$ G < \log_2{(N)}$$
+$$ 2^G < N $$
+Which holds for $N$:
+$$N \in \Omega(2^G)$$
+
+Thus for $N >> G$ can be this model actually better.
+
 \subsubsection{Conclusion}
 To sum this up we have increased number of variables in favor of decreasing number of domain variables.
 We also need less constrains, because this model does not have problem with order of
 variables in groups. This model also automaticly ensures that one player
 can not be in group multiple times, which leads to simplification of constrains.
-Lastly we have better worst case estimate.
+Unfortunately condition $N \in \Omega(2^G)$ for better worst time estimate is quite hard.
 
-Nevertheless, there is still quite a few constrains which just ensure that players
+Furthermore, there is still quite a few constrains which just ensure that players
 are assigned properly to groups. Following model thus try to look at problem from
-different perspective in order to simplefy requried constrains.
+different perspective in order to simplify requried constrains.
 
 \subsection{Dual model}
 In this model there is met trade of between numbers of variables and numbers of values in domains.
@@ -215,33 +244,29 @@ We are going to assign groups to players which reduces number of variables signi
 \subsubsection{Worst case estimate}
 For each day we assign groups to  $N$ players, which makes following estimate:
 
-$$ K^{D*N} = 2^{D*N*\log_2(K)}.$$
+$$ G^{D*N} = 2^{D*N*\log_2(G)}.$$
 
-Lets find relation between $N$ and $K$ in favor for this model.
+\subsubsection{Worst case estimate $M_a$ vs $M_c$}
+$$ 2^{D*N*\log_2(G)} < 2^{\log_2{(N)}*D*G*K}$$
+$$ D*N*\log_2(G) < \log_2{(N)}*D*G*K $$
+$$ N*\log_2(G) < \log_2{(N)}*G*K $$
+Using remark from \ref{insight} $N = G*K$.
+$$ N*\log_2(G) < \log_2{(N)}*N $$
+$$ \log_2(G) < \log_2{(N)} $$
+$$ G < N $$
+Which holds, thus $M_c$ has better estimate than $M_a$.
 
-Since  $G*K = N$ because of condition \ref{once-per-day}, $M_b$ estimate can be
-rewritten as follows:
-$$ 2^{\frac{D*N^2}{K}}. $$ 
 
-Now we want $M_c$ estimate to be lower than $M_b$ estimate:
-$$ 2^{D*N*\log_2(K)} < 2^{\frac{D*N^2}{K}}.  $$
-Logarithming both sides and reducing same elements on both sides of equtaion
-leads to:
-$$D*N*\log_2(K) < \frac{D*N^2}{K}  $$
-$$\log_2(K) < \frac{N}{K}  $$
-$$K*\log_2(K) < N. $$
+\subsubsection{Worst case estimate $M_b$ vs $M_c$}
+$$ 2^{D*N*\log_2(G)} < 2^{D*G*N}$$
+$$ D*N*\log_2(G) < D*G*N$$
+$$ \log_2(G) < G$$
+Which holds, thus $M_c$ has better estimate than $M_b$.
 
-Which gives us lower bound for $N$ such as:
-$$ N \in \Omega(K\log_2 K).$$
 
 \subsubsection{Conclusion}
-
-Thus this model is more suitable for $N \in \Omega(K\log_2 K)$, but
-which is quite natural for this problem. There has to be enough big $N$
-to put players to groups of size $K$ anyway, which is rather not going to be big.
-
-Because of relative simplicity of model and its good worst case performace we have
-decided to implement this approach.
+This model gives best worst case estimate and has simpliest condition thus 
+it is clear candidate for implementation, which is described in next section.
 
 \section{CSP model $M_c$ implementation}
 ...
