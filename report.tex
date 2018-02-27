@@ -1,10 +1,10 @@
 \documentclass[a4paper]{article}
 \usepackage{hyperref} 
-
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
- 
+\usepackage{amsfonts}
 \usepackage{amsthm}
+\usepackage{enumerate}
  
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -14,8 +14,8 @@
 
 \newcommand{\mdef}[2]{
 	\theoremstyle{definition}
-	\begin{definition}{\1}
-	\2
+	\begin{definition}{#1}
+	#2
 	\end{definition}
 }
 
@@ -39,37 +39,68 @@ for general case of \href{http://mathworld.wolfram.com/SocialGolferProblem.html}
 \end{abstract}
 
 \section{Problem Definition}
-\quote{Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer 
-to play no more than once with any other golfer? The answer is yes, and the following table gives a solution.
-Event organizers for bowling, golf, bridge, or tennis frequently tackle problems of this sort, unaware of 
-the problem complexity. In general, it is an unsolved problem. A table of known results is maintained by Harvey.}
+From \href{http://mathworld.wolfram.com/SocialGolferProblem.html}{Wolfram Math World} original definition of problem is as follows:
 
-% social Golfer Problem, ktery je ve slidech prikladem vhodneho tematu? 
-% 
-% Pokud jsem tedy spravne nasel jeho definici -> http://mathworld.wolfram.com/SocialGolferProblem.html
-% 
 
-\mder{}{ $N \in \mathbb{N}$ ... number of players }
-\mder{}{ $K \in \mathbb{N}$ ... size of groups}
-\mder{}{ $D \in \mathbb{N}$ ... number of days}
-\mder{}{ $G \in \mathbb{N}$ ... number of groups}
 
-\mder{}{ Lets define groups as sets $$\forall i \in [G], j \in [D]: S_{i,j}$$
-such  as 
-\begin{itemize}
-\item $$\forall p \in S_{i,j}: p \in [N]$$ Players are identified by numbers in given groups.
-\item $$ |S_{i,j}| = K$$  Every group has exactly $K$ players in it.
-\item $$\forall p \in S_{i,j}: p |{x | x \in S_{i,j} \land x = p }| = 1 $$ Every player is at most once in group.
-\end{itemize}  }
+\textit{``Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer 
+to play no more than once with any other golfer? The answer is yes, and the following table gives a solution.}
 
-We are looking for solutions such as every player is plaing exactly once in every day.
-$$ \forall i \in [D]: \bigcup_{ j \in [G]} S_{i,j} = [N] $$
-Every player plays no more then once with any other player. Which is same as every pair of players 
-is in at most 1 group.
-$$ \forall x,y \in [N]: |{S| \exists i \in [D] \land \exists j \in [G]: x \in S_{i,j} \land y \in S_{i,j}}| < 2 $$
-\mder{}{ W}
-\mder{}{ $G$ ... number of groups}
+\begin{tabular}{| l || c | c | c | c | r |}
+\hline
+Mon & ABCD & EFGH & IJKL & MNOP	& QRST \\
+\hline
+Tue & AEIM & BJOQ & CHNT & DGLS	& FKPR \\
+\hline
+Wed & AGKO & BIPT & CFMS & DHJR	& ELNQ \\
+\hline
+Thu & AHLP & BKNS & CEOR & DFIQ	& GJMT \\
+\hline
+Fri & AFJN & BLMR& CGPQ	& DEKT & HIOS \\
+\hline
+\end{tabular} 
 
+\textit{Event organizers for bowling, golf, bridge, or tennis frequently tackle problems of this sort, unaware of 
+the problem complexity. In general, it is an unsolved problem. A table of known results is maintained by Harvey."
+}
+
+
+\subsection{General case problem definition}
+
+Lets first define problem parameters.
+
+\mdef{}{ 
+	\begin{enumerate}[(i)]
+		\item $ N \in \mathbb{N} $ ... number of players 
+		\item $ K \in \mathbb{N} $ ... size of groups
+		\item $ D \in \mathbb{N} $ ... number of days
+		\item $ G \in \mathbb{N} $ ... number of groups
+	\end{enumerate}
+}
+
+Now when we have our problem parametrized we can describe model assuming those parameters.
+But lets first define following simple notation.
+\mdef{}{
+	For given $S \in \mathbb{N}$ define:
+	$$ [S] \equiv \{1,2,...S\}.  $$
+ }
+
+\mdef{}{ Lets define groups as sets $\forall i \in [G], j \in [D]: S_{i,j}$ such  as:
+	\begin{enumerate}[(i)]
+		\item Players are identified by numbers in given groups. $$\forall p \in S_{i,j}: p \in [N]$$ 
+		\item Every group has exactly $K$ players in it. $$ |S_{i,j}| = K$$  
+		\item Every player is at most once in group. $S_{i,j}$ are sets thus this holds trivaly. 
+		\item Every player is playing exactly once in every day.  $$ \forall i \in [D]: \bigsqcup_{ j \in [G]} S_{i,j} = [N] $$
+		\item Every player plays no more then once with any other player. Which is same as every pair of players 
+		is in at most 1 group.  $$ \forall x,y \in [N]: |\{S | \exists i \in [D] \land \exists j \in [G]: x \in S_{i,j} \land y \in S_{i,j}\}| < 2 $$
+	\end{enumerate}  
+}
+
+In following section our task is going to be to choose proper representation for this model in terms of CSP.
+
+
+
+\section{CSP model representation}
 % - v kazdem dni 
 % (A) priradim kazdemu hraci skupinu
 % vs
@@ -93,10 +124,6 @@ $$ \forall x,y \in [N]: |{S| \exists i \in [D] \land \exists j \in [G]: x \in S_
 
 
 
-
-
-
-\section{Solution}
 \subsection{CSP Model}
 \subsubsection{Variables}
 \subsubsection{Domain}
