@@ -1,6 +1,23 @@
 \documentclass[a4paper]{article}
-%\usepackage{url}
 \usepackage{hyperref} 
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+ 
+\usepackage{amsthm}
+ 
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+ 
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\newcommand{\mdef}[2]{
+	\theoremstyle{definition}
+	\begin{definition}{\1}
+	\2
+	\end{definition}
+}
 
 \def \golf {Golf Problem Solver}
 
@@ -22,8 +39,63 @@ for general case of \href{http://mathworld.wolfram.com/SocialGolferProblem.html}
 \end{abstract}
 
 \section{Problem Definition}
-Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer to play no more than once with any other golfer? The answer is yes, and the following table gives a solution.
-Event organizers for bowling, golf, bridge, or tennis frequently tackle problems of this sort, unaware of the problem complexity. In general, it is an unsolved problem. A table of known results is maintained by Harvey.
+\quote{Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer 
+to play no more than once with any other golfer? The answer is yes, and the following table gives a solution.
+Event organizers for bowling, golf, bridge, or tennis frequently tackle problems of this sort, unaware of 
+the problem complexity. In general, it is an unsolved problem. A table of known results is maintained by Harvey.}
+
+% social Golfer Problem, ktery je ve slidech prikladem vhodneho tematu? 
+% 
+% Pokud jsem tedy spravne nasel jeho definici -> http://mathworld.wolfram.com/SocialGolferProblem.html
+% 
+
+\mder{}{ $N \in \mathbb{N}$ ... number of players }
+\mder{}{ $K \in \mathbb{N}$ ... size of groups}
+\mder{}{ $D \in \mathbb{N}$ ... number of days}
+\mder{}{ $G \in \mathbb{N}$ ... number of groups}
+
+\mder{}{ Lets define groups as sets $$\forall i \in [G], j \in [D]: S_{i,j}$$
+such  as 
+\begin{itemize}
+\item $$\forall p \in S_{i,j}: p \in [N]$$ Players are identified by numbers in given groups.
+\item $$ |S_{i,j}| = K$$  Every group has exactly $K$ players in it.
+\item $$\forall p \in S_{i,j}: p |{x | x \in S_{i,j} \land x = p }| = 1 $$ Every player is at most once in group.
+\end{itemize}  }
+
+We are looking for solutions such as every player is plaing exactly once in every day.
+$$ \forall i \in [D]: \bigcup_{ j \in [G]} S_{i,j} = [N] $$
+Every player plays no more then once with any other player. Which is same as every pair of players 
+is in at most 1 group.
+$$ \forall x,y \in [N]: |{S| \exists i \in [D] \land \exists j \in [G]: x \in S_{i,j} \land y \in S_{i,j}}| < 2 $$
+\mder{}{ W}
+\mder{}{ $G$ ... number of groups}
+
+% - v kazdem dni 
+% (A) priradim kazdemu hraci skupinu
+% vs
+% (B) priradim kazdemu mistu ve skupine hrace
+% vs
+% (C) generovat rovnou inteligentne
+% 
+% (A)
+% 5^20 k
+% (1) podminka: kazda skupina ma prave k hrace
+% 
+% (B)
+% 20^20
+% (1a) podminka: hraci se ve skupine neopakuji
+% (1b) podminka: kazdy hrac je pouze v jedne skupine 
+% 
+% 
+% -pro vsechny skupiny mezi dny 
+% (2) podminka: kazdy hrac hralje s kazdym nejvyse 1
+
+
+
+
+
+
+
 \section{Solution}
 \subsection{CSP Model}
 \subsubsection{Variables}
