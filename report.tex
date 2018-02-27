@@ -4,6 +4,7 @@
 \usepackage[english]{babel}
 \usepackage{amsfonts}
 \usepackage{amsthm}
+\usepackage{amsmath}
 \usepackage{enumerate}
  
 \theoremstyle{definition}
@@ -65,7 +66,7 @@ the problem complexity. In general, it is an unsolved problem. A table of known 
 }
 
 
-\subsection{General case problem definition}
+\subsection{General case problem definition}\label{general-def}
 
 Lets first define problem parameters.
 
@@ -82,16 +83,16 @@ Now when we have our problem parametrized we can describe model assuming those p
 But lets first define following simple notation.
 \mdef{}{
 	For given $S \in \mathbb{N}$ define:
-	$$ [S] \equiv \{1,2,...S\}.  $$
+	$$ [S] \equiv \{0,1,2,...,S-1\}.  $$
  }
 
 \mdef{}{ Lets define groups as sets $\forall i \in [G], j \in [D]: S_{i,j}$ such  as:
 	\begin{enumerate}[(i)]
 		\item Players are identified by numbers in given groups. $$\forall p \in S_{i,j}: p \in [N]$$ 
-		\item Every group has exactly $K$ players in it. $$ |S_{i,j}| = K$$  
-		\item Every player is at most once in group. $S_{i,j}$ are sets thus this holds trivaly. 
-		\item Every player is playing exactly once in every day.  $$ \forall i \in [D]: \bigsqcup_{ j \in [G]} S_{i,j} = [N] $$
-		\item Every player plays no more then once with any other player. Which is same as every pair of players 
+		\item\label{groups-size} Every group has exactly $K$ players in it. $$ |S_{i,j}| = K$$  
+		\item\label{one-player} Every player is at most once in group. $S_{i,j}$ are sets thus this holds trivaly. 
+		\item\label{once-per-day} Every player is playing exactly once in every day.  $$ \forall i \in [D]: \bigsqcup_{ j \in [G]} S_{i,j} = [N] $$
+		\item\label{player-pairs} Every player plays no more then once with any other player. Which is same as every pair of players 
 		is in at most 1 group.  $$ \forall x,y \in [N]: |\{S | \exists i \in [D] \land \exists j \in [G]: x \in S_{i,j} \land y \in S_{i,j}\}| < 2 $$
 	\end{enumerate}  
 }
@@ -122,17 +123,129 @@ In following section our task is going to be to choose proper representation for
 % (2) podminka: kazdy hrac hralje s kazdym nejvyse 1
 
 
+Simpliest representation which comes right into our mind is using directly definition \ref{general-def}.
+
+\subsection{Straight forward model}
+We just create for each slot in each group in each day variable and will try to assign right players.
+
+\mdef{}{ Lets define CSP model $M_a = \langle V_a,D_a,C_a \rangle$ such as:
+	\begin{enumerate}[(i)]
+		\item $$ V_a = \{V_k|  \forall i \in [D], \forall j \in [G], \forall p \in [K] \exists k \in \mathbb{N}: V_k \text{ is CSP variable } \land  k=i*G*K+j*K+p \} $$
+		\item $$ D_a = \{D_i| \forall V_i \in V: D_i = [N] \} $$
+		\item $$ C_a = \{ C_1, C_2, C_3, C_4\} $$
+		\begin{enumerate}
+			\item To ensure conditions \ref{groups-size} and \ref{one-player} we need constrain $C_1$ requiring that player can be assigned to at most one variable in certain group.
+			\item To ensure condition \ref{once-per-day} we need constrain $C_2$ requiring that each player playes once per day. 
+			\item To ensure condition \ref{player-pairs} we need constrain $C_3$ requiring that each pair of player plays at most once.
+			\item Optionaly it would be good idea to create another constrain $C_4$ requiring order in variables of groups to prune state space.
+		\end{enumerate}
+	\end{enumerate}
+}
 
 
-\subsection{CSP Model}
-\subsubsection{Variables}
-\subsubsection{Domain}
-\subsubsection{Constrains}
+One can see that although $M_a$ model is quite straight forward for variable representation,
+we have to pay more attention for constrains. 
 
-\paragraph{Variables}
-\subparagraph{Variables}
-\subsection{}
-\section{Test}
+\subsubsection{Worst case estimate}
+
+Lets make estimate how much states CSP solver has to go through in worst case.
+Each variable $V_i$ can be assigned by $N$ domain values and there is 
+$D*G*K$ of such variables thus estimate is:
+$$N^{D*G*K} = 2^{\log_2{(N)}*D*G*K}$$
+
+\subsubsection{Conclusion}
+Problem of this model is obliviously unordered sets for group variables. 
+This thought led us to following model.
+
+\subsection{Model dealing with unordered sets}
+This model increaces number of variables substantialy, but also reduces domains values substantialy.
+\mdef{}{ Lets define CSP model $M_b = \langle V_b,D_b,C_b \rangle$ such as:
+	\begin{enumerate}[(i)]
+		\item $$ V_b = \{V_k|  \forall i \in [D], \forall j \in [G], \forall l \in [N] \exists k \in \mathbb{N}: V_k \text{ is CSP variable } \land  k=i*G*N+j*N+l \} $$
+		\item $$ D_b = \{D_i| \forall V_i \in V: D_i = [2] \} $$
+		\item $$ C_b = \{ C_1, C_2, C_3\} $$
+		\begin{enumerate}
+			\item To ensure condition \ref{groups-size} we need constrain $C_1$ ensuring there is going to be
+			set exactly $K$ variables from each variables for given group.
+			\item The condition \ref{one-player} is taken for granted in this model.
+			\item To ensure condition \ref{once-per-day} we need constrain $C_2$ requiring that each player plays once per day. 
+			\item To ensure condition \ref{player-pairs} we need constrain $C_3$ requiring that each pair of player plays at most once.
+		\end{enumerate}
+	\end{enumerate}
+}
+
+\subsubsection{Worst case estimate}
+
+Lets make estimate how much states CSP solver has to go through in worst case.
+Each variable $V_i$ can be assigned by $2$ domain values and there is 
+$D*G*N$ of such variables thus estimate is:
+$$2^{D*G*N}.$$
+
+\subsubsection{Conclusion}
+To sum this up we have increased number of variables in favor of decreasing number of domain variables.
+We also need less constrains, because this model does not have problem with order of
+variables in groups. This model also automaticly ensures that one player
+can not be in group multiple times, which leads to simplification of constrains.
+Lastly we have better worst case estimate.
+
+Nevertheless, there is still quite a few constrains which just ensure that players
+are assigned properly to groups. Following model thus try to look at problem from
+different perspective in order to simplefy requried constrains.
+
+\subsection{Dual model}
+In this model there is met trade of between numbers of variables and numbers of values in domains.
+We are going to assign groups to players which reduces number of variables significantly.
+
+\mdef{}{ Lets define CSP model $M_c = \langle V_c,D_c,C_c \rangle$ such as:
+	\begin{enumerate}[(i)]
+		\item $$ V_c = \{V_k|  \forall i \in [D], \forall j \in [N] \exists k \in \mathbb{N}: V_k \text{ is CSP variable } \land  k=i*N+j \} $$
+		\item $$ D_c = \{D_i| \forall V_i \in V: D_i = [G] \} $$
+		\item $$ C_c = \{ C_1, C_2\} $$
+		\begin{enumerate}
+			\item To ensure condition \ref{groups-size} we need constrain $C_1$ ensuring that group assignment leds to 
+			groups of equal size $K$.
+			\item The condition \ref{one-player} is taken for granted in this model, because each player in each day has assigned only one group.
+			\item The condition \ref{once-per-day} is also taken for granted, because every player  in each day has assigned group.
+			\item We still need to ensure condition \ref{player-pairs} with constrain $C_2$ requiring that each pair of player plays at most once.
+			\item Optionaly we can add constrain $C_3$ reducing only solutions where days are accepted only in lexically ascending order - which reduces symetries.
+		\end{enumerate}
+	\end{enumerate}
+}
+
+\subsubsection{Worst case estimate}
+For each day we assign groups to  $N$ players, which makes following estimate:
+
+$$ K^{D*N} = 2^{D*N*\log_2(K)}.$$
+
+Lets find relation between $N$ and $K$ in favor for this model.
+
+Since  $G*K = N$ because of condition \ref{once-per-day}, $M_b$ estimate can be
+rewritten as follows:
+$$ 2^{\frac{D*N^2}{K}}. $$ 
+
+Now we want $M_c$ estimate to be lower than $M_b$ estimate:
+$$ 2^{D*N*\log_2(K)} < 2^{\frac{D*N^2}{K}}.  $$
+Logarithming both sides and reducing same elements on both sides of equtaion
+leads to:
+$$D*N*\log_2(K) < \frac{D*N^2}{K}  $$
+$$\log_2(K) < \frac{N}{K}  $$
+$$K*\log_2(K) < N. $$
+
+Which gives us lower bound for $N$ such as:
+$$ N \in \Omega(K\log_2 K).$$
+
+\subsubsection{Conclusion}
+
+Thus this model is more suitable for $N \in \Omega(K\log_2 K)$, but
+which is quite natural for this problem. There has to be enough big $N$
+to put players to groups of size $K$ anyway, which is rather not going to be big.
+
+Because of relative simplicity of model and its good worst case performace we have
+decided to implement this approach.
+
+\section{CSP model $M_c$ implementation}
+...
+
 \section{Conclusion}
 
 \end{document}
