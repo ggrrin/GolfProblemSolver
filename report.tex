@@ -6,6 +6,7 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{enumerate}
+\usepackage{mathtools}
  
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -20,12 +21,14 @@
 	\end{definition}
 }
 
-\newcommand{\mins}[2]{
+\newcommand{\mremark}[2]{
 	\theoremstyle{remark}
 	\begin{remark}{#1}
 	#2
 	\end{remark}
 }
+
+\newcommand{\ccc}[1]{{\mbox{\fontfamily{lmtt}\selectfont\textbf{#1}}}}
 
 \def \golf {Golf Problem Solver}
 
@@ -48,8 +51,6 @@ for general case of \href{http://mathworld.wolfram.com/SocialGolferProblem.html}
 
 \section{Problem Definition}
 From \href{http://mathworld.wolfram.com/SocialGolferProblem.html}{Wolfram Math World} original definition of problem is as follows:
-
-
 
 \textit{``Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer 
 to play no more than once with any other golfer? The answer is yes, and the following table gives a solution.}
@@ -106,7 +107,7 @@ But lets first define following simple notation.
 
 
 
-\mins{}{ 
+\mremark{}{ 
 We can see that conditions \ref{groups-size} and \ref{once-per-day} implies that:
 $$ N = G*K. $$
 }\label{insight}
@@ -229,7 +230,7 @@ We are going to assign groups to players which reduces number of variables signi
 	\begin{enumerate}[(i)]
 		\item $$ V_c = \{V_k|  \forall i \in [D], \forall j \in [N] \exists k \in \mathbb{N}: V_k \text{ is CSP variable } \land  k=i*N+j \} $$
 		\item $$ D_c = \{D_i| \forall V_i \in V: D_i = [G] \} $$
-		\item $$ C_c = \{ C_1, C_2\} $$
+		\item $$ C_c = \{ C_1, C_2, C_3\} $$
 		\begin{enumerate}
 			\item To ensure condition \ref{groups-size} we need constrain $C_1$ ensuring that group assignment leds to 
 			groups of equal size $K$.
@@ -269,8 +270,160 @@ This model gives best worst case estimate and has simpliest condition thus
 it is clear candidate for implementation, which is described in next section.
 
 \section{CSP model $M_c$ implementation}
-...
+All the variables are stored in \textit{variables data structure} implemented as list
+of days, where each days has $N$ variables determinig players group assignment.
 
-\section{Conclusion}
+\mdef{}{
+\textit{Variables data structure}(VDS) is matrix $\mathbb{D}$ with $D \times N$ dimensions such as:
+\begin{equation}
+	\mathbb{D}_{i,j} = 
+	\begin{cases*}
+		\text{unbound}	& player $j$ in day $i$ does not have group assigned yet, \\
+		g \in \{1,...,G\}        & player $j$ in day $i$ has assgned group $g$. 
+	\end{cases*}
+\end{equation}
+}
+
+\subsection{Group size constrain - \ccc{group\_size\_constrain}}
+This constrain should satisfy condition \ref{groups-size}. For each day 
+and each group constrain ensures that the same number of all assignment for
+each group is present for each day. 
+
+\subsection{Pairs constrain -- \ccc{pair\_constrain}}
+This constrain should satisfy condition \ref{player-pairs}. Because this condition basically 
+binds every pair of variables we have decided to implement that as custom global constrain
+using \href{https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/The-Global-Constraint-Programming-Interface.html#The-Global-Constraint-Programming-Interface}{
+The Global Constraint Programming Interface}. 
+
+\subsubsection{Constrain data structures}
+We set to wake up constrain every time arbitrary domain variable has changed.
+Once our predicate is called because of change we have to identify, which 
+variables has actually changed. For that purpouse we define
+\textit{pair constrain state} and \textit{played record}.
+
+\mremark{}{
+In source code we define slang \textit{variable} is \textit{played}, 
+which means \textit{variable} has changed from \textit{unbound} to \textit{grounded} \textit{variable}.
+}
+
+\mdef{}{
+\textit{Pair constrain state}(PCS) is matrix $\mathbb{S}$ with $D \times N$ dimensions (represented as list of lists) such as:
+
+\begin{equation}
+	\mathbb{S}_{i,j} = 
+	\begin{cases*}
+		\text{ground} & variable is grounded, \\
+		\text{var} & variable is unbound.
+	\end{cases*}
+\end{equation}
+}
+
+\mdef{}{
+\textit{Played record}(PR) is matrix $\mathbb{P}$ with $D \times N$ dimensions (represented as list of lists) such as:
+
+\begin{equation}
+	\mathbb{P}_{i,j} = 
+	\begin{cases*}
+		\text{ground} & variable has been grounded, \\
+		\text{none} & variable did not changed, \\ 
+		\text{unground} & variable has became unbound .
+	\end{cases*}
+\end{equation}
+}
+
+
+\subsubsection{Psudo code algorithm}
+Upon wake up constrain process following steps.
+
+\begin{enumerate}
+\item Gets previous PCS $\mathbb{S'}$ and current VDS $\mathbb{D}$.
+\item Calculates new PCS $\mathbb{S}$ from current VDS $\mathbb{D}$.
+\item Based on $\mathbb{S'}$ and $\mathbb{S}$ creates PR $\mathbb{P}$.
+\item Base on $\mathbb{P}$ for each grounded variable finds invalid domain values of each variables.
+\item For each variable calculate new domains.
+\item Unifies action with new domains and new PCS $\mathbb{S}$ with output parameters.
+\end{enumerate}
+
+\subsubsection{Invalid domain values detection}
+Lets assume we get notified that variable for $n$-th player in $p$-th day has been grounded. 
+\mdef{}{Lets define following variables to simplify notation: 
+\begin{enumerate}
+\item $dp := \mathbb{D}_{p,*}$ \hfill day with notified grounded variable,
+\item $\forall p' \neq p: d := \mathbb{D}_{p',*}$ \hfill arbitrary other day,
+\item $I_{i,j}$ \hfill set of invalid domain values for variable in $i$-th day of $j$-th player.
+\end{enumerate}
+}
+
+Following table illustrate which domains can be reduced by which type of reductions.
+\begin{itemize}
+\item o... denotes notified grounded variable
+\item A... denotes variable whose domain can be reduced by A reduction
+\item B... denotes variable whose domain can be reduced by B reduction
+\item C... denotes variable whose domain can be reduced by C reduction
+\end{itemize}
+ 
+\begin{tabular}{
+ l | c | c || c || c | c | r |}
+\multicolumn{1}{l}{} & \multicolumn{1}{c}{$d_i$}  & $d_i$ & $d_n$ & \multicolumn{1}{c}{$d_i$} & \multicolumn{1}{c}{$d_i$} & \multicolumn{1}{r}{$d_i$} \\
+\cline{2-7}
+d & A & A & C & A & A & A \\
+\cline{2-7}
+d & A & A & C & A & A & A \\
+\hline
+\hline
+dp & B & B & o & B & B & B \\
+\hline
+\hline
+d & A & A & C & A & A & A \\
+\cline{2-7}
+d & A & A & C & A & A & A \\
+\cline{2-7}
+\end{tabular} 
+
+
+\paragraph{Other day domains reduction -- A}
+Add value $d_n$ to invalid set for $i$-th player in $p'$-th day.
+$ \forall i \neq p \in [N]$ such as:
+\begin{enumerate}[(i)]
+\item $d_n \text{ grounded}$
+\item $dp_i \text{ grounded}$
+\item $d_i \text{ not grounded}$ \hfill variable whose domain can be reduced 
+\item $dp_n = dp_i$ \hfill $n$-th and $i$-th player are in the same group in $p$-th day
+\end{enumerate}
+$$ I_{p',i} \cup \{ d_n \} $$
+
+\paragraph{Played day domains reduction -- B}
+Add value $dp_n$ to invalid set for $i$-th player in  $p$-th day.
+$ \forall i \neq p \in [N]$ such as:
+\begin{enumerate}[(i)]
+\item $d_n \text{ grounded}$
+\item $dp_i \text{ not grounded}$ \hfill variable whose domain can be reduced 
+\item $d_i \text{ grounded}$ 
+\item $d_n = p_i$ \hfill $n$-th and $i$-th player are in the same group in $p'$-th day
+\end{enumerate}
+$$ I_{p,i} \cup \{ dp_n \} $$
+
+
+\paragraph{Player domain reduction -- C}
+Add value $d_i$ to invalid set for $n$-th player in  $p'$-th day.
+$ \forall i \neq p \in [N]$ such as:
+\begin{enumerate}[(i)]
+\item $d_n \text{ not grounded}$ \hfill variable whose domain can be reduced 
+\item $dp_i \text{ grounded}$ 
+\item $d_i \text{ grounded}$ 
+\item $dp_n = dp_i$ \hfill $n$-th and $i$-th player are in the same group in $p$-th day
+\end{enumerate}
+$$ I_{p',n} \cup \{ d_i \} $$
+
+Resulting algorithum thus for each notified grounded variable tries to apply all A, B, C reductions
+to populate sets of invalid domain values. Using these sets all possible domains are then
+reduced.
+
+\section{User manual - how tu run program }
+\section{example data}
+\section{Tests}
+different models - symetric/notsymetric
+different search strategies ? configure labeling ? 
+different data - different parameters
 
 \end{document}
