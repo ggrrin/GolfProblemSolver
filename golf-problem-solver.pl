@@ -23,7 +23,7 @@ test3(Z) :-
 	domain([A,B,C], 1, 2),
 	process_boundN_actions([1,A,B,C], [1,1,2,2], 1, 1, [[],[],[],[]], Z).
 
-% golf(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results 
+% golf_t(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results 
 % in DaysAttandance without days symetries, in T returns duration of search in miliseconds 
 % N ... number of players
 % K ... number of players in group
@@ -35,7 +35,7 @@ golf_t(T, DaysAttendance, N, K, G, D) :-
 	statistics(runtime,[Stop|_]),
 	T is Stop - Start.
 
-% golf_all(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all 
+% golf_all_t(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all 
 % results in DaysAttandance, in T returns duration of search in miliseconds 
 % N ... number of players
 % K ... number of players in group
@@ -147,13 +147,14 @@ clpfd:dispatch_global(pair_constrain(P), Sin, Sout, Actions) :-
 
 pair_constrain_body(P, Sin, Sout, Actions) :-
 	next_grounded_state(P, Sin, Sout, PlayedRecord),
-	invalidateDomains(P, PlayedRecord, InvalidValues),
+	catch(invalidateDomains(P, PlayedRecord, InvalidValues), fail, InvalidValues = fail),  
 	gather_actions(P, InvalidValues, Actions).
 
 
 % gather_actions(+Attandance, +InvalidValues, -Actions) :-
 % creates action updating domains for every variable whose domain has changed
 gather_actions([], [], []).
+gather_actions(_, fail, fail).
 gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
 	gather_day_actions(D, DInvalids, Actions, LastAction),
 	gather_actions(Attandance, InvalidValues, LastAction).
@@ -248,14 +249,12 @@ updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DI
 	(fd_var(Dn) ->  process_unboundN_actions(DpDay, DDay, DAc, DpN, DInvalids, DInvalidsOut), % C.
 	DpInvalidsOut = DpInvalids
 	;
-	process_boundN_actions(DpDay, DDay, Dn, DpN, DInvalids, DInvalidsOut), % A.
-	process_boundN_actions(DDay, DpDay, DpN, Dn, DInvalidsOut, DpInvalidsOut) % B.
-%	process_DpDiffSets(DDay, DpDay, DpN, Dn,  DpInvalids, DpInvalidsOut) % B.
+	process_boundN_actions(Dp, DpDay, DDay, Dn, DpN, DInvalids, DInvalidsOut), % A.
+	process_boundN_actions(D, DDay, DpDay, DpN, Dn, DInvalidsOut, DpInvalidsOut) % B.
 	),
 	diff_insert(DAc, Dn, DAcOut), % [DAc|Dn]
 	diff_insert(DpAc, DpN, DpAcOut), % [DpAc|DpN]
 	updateDayPairsInvalidValues(D, Dp, DAcOut, DpAcOut, DpRecord, [DInvalidsOut|DpInvalidsOut], InvalidValues).
-	%TODO fail actions
 	
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -267,14 +266,18 @@ updateDayPairsInvalidValues([Dn|D],  [DpN|Dp], DAc, DpAc, [ground|DpRecord], [DI
 % Dp played day assignments ; D other day assignments
 % DpN player assignment in played day player
 % Dn player assgnment in other day player
-process_boundN_actions([], [], _, _, [], []).
-process_boundN_actions([DpI|Dp], [Di|D], Dn, DpN, [X|DInvalids], [Y|DInvalidsOut] ) :-
+process_boundN_actions(_, [], [], _, _, [], []).
+process_boundN_actions(DpX, [DpI|Dp], [Di|D], Dn, DpN, [X|DInvalids], [Y|DInvalidsOut] ) :-
 	( (ground(DpI), DpI == DpN, fd_var(Di)) ->  %played index is not var thus gonna fail 
 	fdset_add_element(X, Dn, Y)
 	;
+	(ground(DpI), DpI == DpN, ground(Di), Di == Dn, DpX \= Dp) -> x
+	;
 	X=Y
 	),
-	process_boundN_actions(Dp, D, Dn, DpN, DInvalids, DInvalidsOut).
+	process_boundN_actions(DpX, Dp, D, Dn, DpN, DInvalids, DInvalidsOut).
+
+x :- throw(fail).
 	
 
 % process_unboundN_actions(Dp, D, DAc, DpN, DInvalids, DInvalidsOut) :-
