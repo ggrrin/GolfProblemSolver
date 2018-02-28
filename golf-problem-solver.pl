@@ -1,73 +1,46 @@
-% social Golfer Problem, ktery je ve slidech prikladem vhodneho tematu? 
-% 
-% Pokud jsem tedy spravne nasel jeho definici -> http://mathworld.wolfram.com/SocialGolferProblem.html
-% 
-% Pokud to dobre chapu solver by mel vzit 3 parametry n, k, d takove, ze:
-% n .... pocet hracu golfu
-% k .... velikost skupiny, ktera hraje spolu v jeden den
-% d .... pocet dnu turnaje
-% pricemz mus platit k*d=n
-% 
-% a hledame takove rozhozeni hracu do skupin, ze plat:
-% kazdy hrac hraje prave jednou kazdy den
-% kazdy hrac je ve skupine s jinym hracem nejvyse jednou 
-%
-% - kazdy den hraji vsichni hraci
-% - skupin je n choose k
-% 
-% - v kazdem dni 
-% (A) priradim kazdemu hraci skupinu
-% vs
-% (B) priradim kazdemu mistu ve skupine hrace
-% vs
-% (C) generovat rovnou inteligentne
-% 
-% (A)
-% 5^20 k
-% (1) podminka: kazda skupina ma prave k hrace
-% 
-% (B)
-% 20^20
-% (1a) podminka: hraci se ve skupine neopakuji
-% (1b) podminka: kazdy hrac je pouze v jedne skupine 
-% 
-% 
-% -pro vsechny skupiny mezi dny 
-% (2) podminka: kazdy hrac hralje s kazdym nejvyse 1
-% 
-
 :- use_module(library(clpfd)).
-
-% n = 4
-% k = 2
-% g = 2
-% d = 3 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Helper testing predicates 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% test(DaysAttendance) :- simple test, where the results can be verified by hand
 test(DaysAttendance) :-
 	golf(DaysAttendance, 4, 2, 2, 2).
 
+% test1(S,Ac) :- test of pair constrain implementation non-determinism
 test1(S,Ac) :-
 	domain([A,B,C], 1, 2),
 	pair_constrain_body([[1,1,2,2],[1,A,B,C]], [[ground,ground,ground,ground],[var, var, var, var]], S, Ac).
 
+% test2(Z) :- test of pair constrain implementation non-determinism
 test2(Z) :-
 	domain([A,B,C], 1, 2),
 	process_boundN_actions([1,1,2,2], [1,A,B,C], 1, 1, [[],[],[],[]], Z).
 
+% test3(Z) :- test of pair constrain implementation non-determinism
 test3(Z) :-
 	domain([A,B,C], 1, 2),
 	process_boundN_actions([1,A,B,C], [1,1,2,2], 1, 1, [[],[],[],[]], Z).
 
+% golf(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results 
+% in DaysAttandance without days symetries, in T returns duration of search in miliseconds 
+% N ... number of players
+% K ... number of players in group
+% G ... number of groups
+% D ... number of days
 golf_t(T, DaysAttendance, N, K, G, D) :- 
 	statistics(runtime,[Start|_]),
 	golf(DaysAttendance, N, K, G, D),
 	statistics(runtime,[Stop|_]),
 	T is Stop - Start.
 
+% golf_all(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all 
+% results in DaysAttandance, in T returns duration of search in miliseconds 
+% N ... number of players
+% K ... number of players in group
+% G ... number of groups
+% D ... number of days
 golf_all_t(T, DaysAttendance, N, K, G, D) :- 
 	statistics(runtime,[Start|_]),
 	golf_all(DaysAttendance, N, K, G, D),
@@ -79,6 +52,11 @@ golf_all_t(T, DaysAttendance, N, K, G, D) :-
 %% Social Golf problem CSP model 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% golf(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results in DaysAttandance without days symetries
+% N ... number of players
+% K ... number of players in group
+% G ... number of groups
+% D ... number of days
 golf(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
@@ -87,6 +65,11 @@ golf(DaysAttendance, N, K, G, D) :-
 	lex_chain(DaysAttendance),
 	labeling([],Variables).
 
+% golf_all(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all results in DaysAttandance 
+% N ... number of players
+% K ... number of players in group
+% G ... number of groups
+% D ... number of days
 golf_all(DaysAttendance, N, K, G, D) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
@@ -94,6 +77,9 @@ golf_all(DaysAttendance, N, K, G, D) :-
 	pair_constrain(DaysAttendance),
 	labeling([],Variables).
 
+% build_model(+N, +D, -DaysAttendance, -Variables) :- creates variables for given parameters 
+% N ... number of players
+% D ... number of days
 build_model(N, D, DaysAttendance, Variables) :- build_model_ac(N, D, 0, DaysAttendance, Variables, []).
 build_model_ac(_, D, D, [], V, V).
 build_model_ac(N, D, DAcumulator, [X|DaysAttendance],  Variables, VariablesAcumulator) :- DAcumulator < D,
@@ -137,6 +123,8 @@ exactly(X, [Y|L], N) :-
 %% Global pairs constrain implementation 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% pair_constrain(+P) :- constraing ensuring that every player pair is used
+% at most once
 pair_constrain(P) :-
 	suspensions(P, Suspensions),
 	next_grounded_state(P, [], Sout, _),
@@ -164,6 +152,7 @@ pair_constrain_body(P, Sin, Sout, Actions) :-
 
 
 % gather_actions(+Attandance, +InvalidValues, -Actions) :-
+% creates action updating domains for every variable whose domain has changed
 gather_actions([], [], []).
 gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
 	gather_day_actions(D, DInvalids, Actions, LastAction),
@@ -171,6 +160,7 @@ gather_actions([D|Attandance], [DInvalids|InvalidValues], Actions) :-
 
 
 % gather_day_actions(D, DInvalids, Actions, LastAction) :-
+% creates action updating domains for every variable whose domain has changed
 gather_day_actions([], [], Actions, Actions).
 gather_day_actions([P|D], [InvalidSet|DInvalids], Actions, LastAction) :-
 	(empty_fdset(InvalidSet) -> 
@@ -188,6 +178,7 @@ gather_day_actions([P|D], [InvalidSet|DInvalids], Actions, LastAction) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % invalidateDomains(+AttendanceDays, +PlayedRecord, -InvalidValues) :-
+% gets invalid domain values for all variables
 invalidateDomains(AttendanceDays, PlayedRecord, InvalidValues) :-
 	init_DaysDiffSets(AttendanceDays, InvalidValuesIn),
 	invalidateDomainsLoop(AttendanceDays, E-E, PlayedRecord, Q-Q, InvalidValuesIn, InvalidValues).
@@ -295,6 +286,7 @@ process_unboundN_actions(Dp, D, DAc, DpN, DInvalids, DInvalidsOut) :-
 
 
 % set_Dn_DiffSet(DAc, Q, DInvalids, DInvalidsOut) :-
+% add invalid values to Dn appropriate diff set
 set_Dn_DiffSet(E-E1, Q, [X|DInvalids], [Y|DInvalids]) :-
 	unify_with_occurs_check(E, E1),
 	fdset_union(X, Q, Y).
@@ -372,26 +364,37 @@ day_state([P|D], [ground|NextState]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % https://johnwickerson.wordpress.com/2009/01/22/implementing-difference-lists-in-prolog/
+
+% diff_cp(Xs-E, Ys-Q) :- creates copy of Xs 
 diff_cp(T-T1, Q-Q ) :- unify_with_occurs_check(T,T1).
 diff_cp([N|Xs]-E, [N|Ys]-Q) :- \+ unify_with_occurs_check([N|Xs], E), diff_cp(Xs-E, Ys-Q).
 
 
+% diff_cat(+X-Y, +Y-YE, -X-YE) :- contatenates list 
 diff_cat(X-Y, Y-YE, X-YE).
 
+% diff_catL(+X-Y, +Y-YE, -X-YE) :- contatenates differential list and return normal one
 diff_catL(X-Y, Y, X).
 
+% diff_insert(+X-Y, +I, -X-E) :- inserts item I to list X 
 diff_insert(X-Y, I, X-E) :- Y = [I|E].
 
+% diff_cp_cat(+X, +Y, -Z) :- make copy of diff list X, concatenate it with Y 
 diff_cp_cat(X, Y, Z) :-
 	diff_cp(X, Q),
 	diff_cat(Q, Y, Z).
 
+% diff_cp_catL(+X, +Y, -Z) :- make copy of diff list X, concatenate it with Y and converts it to normal list 
 diff_cp_catL(X, Y, Z) :-
 	diff_cp(X, Q),
 	diff_catL(Q, Y, Z).
 
+% diff_to_list(+X, -Y) :- converts differential list to normal list
 diff_to_list(X-[], X).
 
+
+
+% list_to_diff(Xs, -Ys-E) :- converts list to differential list
 list_to_diff([], E-E).
 list_to_diff([X|Xs], [X|Ys]-E) :- list_to_diff(Xs, Ys-E).
 
