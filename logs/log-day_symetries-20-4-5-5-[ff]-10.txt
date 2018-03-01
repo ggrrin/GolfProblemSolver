@@ -1,0 +1,176 @@
+% compiling /afs/ms.mff.cuni.cz/u/g/geigerp/Documents/GolfProblemSolver/golf-problem-solver.pl...
+%  loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/clpfd.po...
+%  module clpfd imported into user
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/atts.po...
+%   module attributes imported into clpfd
+%    loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/types.po...
+%    module types imported into attributes
+%    loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/types.po in module types, 10 msec 4112 bytes
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/atts.po in module attributes, 10 msec 40176 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/avl.po...
+%   module avl imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/avl.po in module avl, 0 msec 47376 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/lists.po...
+%   module lists imported into clpfd
+%    module types imported into lists
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/lists.po in module lists, 0 msec 105744 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/ordsets.po...
+%   module ordsets imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/ordsets.po in module ordsets, 0 msec 37312 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/trees.po...
+%   module trees imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/trees.po in module trees, 0 msec 9856 bytes
+%   module types imported into clpfd
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/samsort.po...
+%   module samsort imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/samsort.po in module samsort, 0 msec 21424 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/terms.po...
+%   module terms imported into clpfd
+%    module types imported into terms
+%    module avl imported into terms
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/terms.po in module terms, 0 msec 39648 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/timeout.po...
+%   module timeout imported into clpfd
+%    module types imported into timeout
+%    loading foreign resource /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/x86_64-linux-glibc2.12/timeout.so in module timeout
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/timeout.po in module timeout, 10 msec 37280 bytes
+%   loading foreign resource /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/x86_64-linux-glibc2.12/clpfd.so in module clpfd
+%  loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/clpfd.po in module clpfd, 50 msec 1930848 bytes
+% compiled /afs/ms.mff.cuni.cz/u/g/geigerp/Documents/GolfProblemSolver/golf-problem-solver.pl in module user, 180 msec 2884528 bytes
+SICStus 4.3.2 (x86_64-linux-glibc2.12): Fri May  8 01:05:09 PDT 2015
+Licensed to SP4mff.cuni.cz
+yes
+yes
+T = 15472240,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,3,4,4,5,2,1,2,1,3,5,3,5,2,4,4,1,5,3]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,3,4,4,5,2,1,2,1,3,5,3,5,2,4,4,1,5,3
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | CKMT | DEPQ | FLNS | 
+T = 15472260,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,3,4,4,3,2,5,5,1,2,3,3,1,5,4,4,5,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,3,4,4,3,2,5,5,1,2,3,3,1,5,4,4,5,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AJNS | BGKT | CFLM | DEPQ | HIOR | 
+T = 15472330,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,3,5,5,4,2,1,2,1,3,4,3,4,2,5,5,1,4,3]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,3,5,5,4,2,1,2,1,3,4,3,4,2,5,5,1,4,3
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | CKMT | FLNS | DEPQ | 
+T = 15472350,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,3,5,5,3,2,4,4,1,2,3,3,1,4,5,5,4,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,3,5,5,3,2,4,4,1,2,3,3,1,4,5,5,4,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AJNS | BGKT | CFLM | HIOR | DEPQ | 
+T = 15472390,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,4,3,3,5,2,1,2,1,4,5,4,5,2,3,3,1,5,4]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,4,3,3,5,2,1,2,1,4,5,4,5,2,3,3,1,5,4
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | DEPQ | CKMT | FLNS | 
+T = 15472420,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,4,3,3,4,2,5,5,1,2,4,4,1,5,3,3,5,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,4,3,3,4,2,5,5,1,2,4,4,1,5,3,3,5,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AJNS | BGKT | DEPQ | CFLM | HIOR | 
+T = 15472450,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,4,5,5,3,2,1,2,1,4,3,4,3,2,5,5,1,3,4]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,4,5,5,3,2,1,2,1,4,3,4,3,2,5,5,1,3,4
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | FLNS | CKMT | DEPQ | 
+T = 15472490,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,4,5,5,4,2,3,3,1,2,4,4,1,3,5,5,3,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,4,5,5,4,2,3,3,1,2,4,4,1,3,5,5,3,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AJNS | BGKT | HIOR | CFLM | DEPQ | 
+T = 15472510,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,5,3,3,4,2,1,2,1,5,4,5,4,2,3,3,1,4,5]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,5,3,3,4,2,1,2,1,5,4,5,4,2,3,3,1,4,5
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | DEPQ | FLNS | CKMT | 
+T = 15472560,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,5,3,3,5,2,4,4,1,2,5,5,1,4,3,3,4,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,5,3,3,5,2,4,4,1,2,5,5,1,4,3,3,4,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AJNS | BGKT | DEPQ | HIOR | CFLM | 
+T = 15472580,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4],[1,2,5,4,4,3,2,1,2,1,5,3,5,3,2,4,4,1,3,5]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,5,1,2,4,3,5,1,2,4,3,5,1,5,2,4
+1,2,5,4,4,3,2,1,2,1,5,3,5,3,2,4,4,1,3,5
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AGLQ | BHMS | CEJO | DINT | FKPR | 
+AHJR | BGIO | FLNS | DEPQ | CKMT | 
+yes
