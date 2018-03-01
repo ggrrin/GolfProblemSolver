@@ -23,29 +23,7 @@ test3(Z) :-
 	domain([A,B,C], 1, 2),
 	process_boundN_actions([1,A,B,C], [1,1,2,2], 1, 1, [[],[],[],[]], Z).
 
-% golf_t(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results 
-% in DaysAttandance without days symetries, in T returns duration of search in miliseconds 
-% N ... number of players
-% K ... number of players in group
-% G ... number of groups
-% D ... number of days
-golf_t(T, DaysAttendance, N, K, G, D) :- 
-	statistics(runtime,[Start|_]),
-	golf(DaysAttendance, N, K, G, D),
-	statistics(runtime,[Stop|_]),
-	T is Stop - Start.
 
-% golf_all_t(-T, -DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all 
-% results in DaysAttandance, in T returns duration of search in miliseconds 
-% N ... number of players
-% K ... number of players in group
-% G ... number of groups
-% D ... number of days
-golf_all_t(T, DaysAttendance, N, K, G, D) :- 
-	statistics(runtime,[Start|_]),
-	golf_all(DaysAttendance, N, K, G, D),
-	statistics(runtime,[Stop|_]),
-	T is Stop - Start.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,25 +35,36 @@ golf_all_t(T, DaysAttendance, N, K, G, D) :-
 % K ... number of players in group
 % G ... number of groups
 % D ... number of days
-golf(DaysAttendance, N, K, G, D) :- 
+golf(DaysAttendance, N, K, G, D) :- golf(_, DaysAttendance, N, K, G, D, []).
+golf(T, DaysAttendance, N, K, G, D, Opt) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
 	group_size_constrain(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
 	lex_chain(DaysAttendance),
-	labeling([],Variables).
+	statistics(runtime,[Start|_]),
+	labeling(Opt,Variables),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
+
 
 % golf_all(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns all results in DaysAttandance 
 % N ... number of players
 % K ... number of players in group
 % G ... number of groups
 % D ... number of days
-golf_all(DaysAttendance, N, K, G, D) :- 
+golf_all(DaysAttendance, N, K, G, D) :- golf_all(_, DaysAttendance, N, K, G, D, []).
+golf_all(T, DaysAttendance, N, K, G, D, Opt) :- 
 	build_model(N, D, DaysAttendance, Variables),
 	domain(Variables, 1, G),
 	group_size_constrain(DaysAttendance, G, K),
 	pair_constrain(DaysAttendance),
-	labeling([],Variables).
+	statistics(runtime,[Start|_]),
+	labeling(Opt,Variables),
+	statistics(runtime,[Stop|_]),
+	T is Stop - Start.
+
+
 
 % build_model(+N, +D, -DaysAttendance, -Variables) :- creates variables for given parameters 
 % N ... number of players

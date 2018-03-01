@@ -1,0 +1,94 @@
+% compiling /afs/ms/u/g/geigerp/Documents/GolfProblemSolver/golf-problem-solver.pl...
+%  loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/clpfd.po...
+%  module clpfd imported into user
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/atts.po...
+%   module attributes imported into clpfd
+%    loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/types.po...
+%    module types imported into attributes
+%    loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/types.po in module types, 0 msec 4112 bytes
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/atts.po in module attributes, 0 msec 40176 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/avl.po...
+%   module avl imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/avl.po in module avl, 0 msec 47376 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/lists.po...
+%   module lists imported into clpfd
+%    module types imported into lists
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/lists.po in module lists, 10 msec 105744 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/ordsets.po...
+%   module ordsets imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/ordsets.po in module ordsets, 0 msec 37312 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/trees.po...
+%   module trees imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/trees.po in module trees, 0 msec 9856 bytes
+%   module types imported into clpfd
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/samsort.po...
+%   module samsort imported into clpfd
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/samsort.po in module samsort, 0 msec 21424 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/terms.po...
+%   module terms imported into clpfd
+%    module types imported into terms
+%    module avl imported into terms
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/terms.po in module terms, 0 msec 39648 bytes
+%   loading /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/timeout.po...
+%   module timeout imported into clpfd
+%    module types imported into timeout
+%    loading foreign resource /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/x86_64-linux-glibc2.12/timeout.so in module timeout
+%   loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/timeout.po in module timeout, 0 msec 37280 bytes
+%   loading foreign resource /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/x86_64-linux-glibc2.12/clpfd.so in module clpfd
+%  loaded /usr/local/sicstus4.3.2/bin/sp-4.3.2/sicstus-4.3.2/library/clpfd.po in module clpfd, 60 msec 1930848 bytes
+% compiled /afs/ms/u/g/geigerp/Documents/GolfProblemSolver/golf-problem-solver.pl in module user, 180 msec 2884528 bytes
+X = [[1,1,2,2],[1,2,1,2]] ? 
+1,1,2,2
+1,2,1,2
+AB | CD | 
+AC | BD | 
+X = [[1,1,2,2],[1,2,2,1]] ? 
+1,1,2,2
+1,2,2,1
+AB | CD | 
+AD | BC | 
+X = [[1,1,2,2],[2,1,1,2]] ? 
+1,1,2,2
+2,1,1,2
+AB | CD | 
+BC | AD | 
+X = [[1,1,2,2],[2,1,2,1]] ? 
+1,1,2,2
+2,1,2,1
+AB | CD | 
+BD | AC | 
+X = [[1,2,1,2],[1,1,2,2]] ? 
+1,2,1,2
+1,1,2,2
+AC | BD | 
+AB | CD | 
+X = [[1,2,1,2],[1,2,2,1]] ? 
+1,2,1,2
+1,2,2,1
+AC | BD | 
+AD | BC | 
+X = [[1,2,1,2],[2,1,1,2]] ? 
+1,2,1,2
+2,1,1,2
+AC | BD | 
+BC | AD | 
+X = [[1,2,1,2],[2,2,1,1]] ? 
+1,2,1,2
+2,2,1,1
+AC | BD | 
+CD | AB | 
+X = [[1,2,2,1],[1,1,2,2]] ? 
+1,2,2,1
+1,1,2,2
+AD | BC | 
+AB | CD | 
+X = [[1,2,2,1],[1,2,1,2]] ? 
+1,2,2,1
+1,2,1,2
+AD | BC | 
+AC | BD | 
+X = [[1,2,2,1],[2,1,2,1]] ? 
+1,2,2,1
+2,1,2,1
+AD | BC | 
+BD | AC | 
