@@ -30,11 +30,13 @@ test3(Z) :-
 %% Social Golf problem CSP model 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% golf(-DaysAttendance, +N, +K, +G, +D) :- solve golf problem and returns results in DaysAttandance without days symetries
+% golf(-T, -DaysAttendance, +N, +K, +G, +D, +Opt) :- solve golf problem and returns results in DaysAttandance without days symetries
+% T ... time of search in miliseconds
 % N ... number of players
 % K ... number of players in group
 % G ... number of groups
 % D ... number of days
+% Opt ... labeling predicate options
 golf(DaysAttendance, N, K, G, D) :- golf(_, DaysAttendance, N, K, G, D, []).
 golf(T, DaysAttendance, N, K, G, D, Opt) :- 
 	build_model(N, D, DaysAttendance, Variables),

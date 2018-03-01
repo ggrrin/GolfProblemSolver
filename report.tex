@@ -49,7 +49,7 @@ for general case of \href{http://mathworld.wolfram.com/SocialGolferProblem.html}
 {CSP over Finite Domains library}.
 \end{abstract}
 
-\section{Problem Definition}
+\section{Problem Definition}\label{table}
 From \href{http://mathworld.wolfram.com/SocialGolferProblem.html}{Wolfram Math World} original definition of problem is as follows:
 
 \textit{``Twenty golfers wish to play in foursomes for 5 days. Is it possible for each golfer 
@@ -416,33 +416,143 @@ $ \forall i \neq p \in [N]$ such as:
 $$ I_{p',n} \cup \{ d_i \} $$
 
 Resulting algorithum thus for each notified grounded variable tries to apply all A, B, C reductions
-to populate sets of invalid domain values. Using these sets all possible domains are then
-reduced.
+to populate sets of invalid domain values. Together with this step is also done check whether
+the grounded variables are valid. Using these invalid sets all possible domains are then reduced.
+Based on the result the fail action or actions changing domain sets are returned.  
 
-\section{User manual - how tu run program }
+\subsection{Days symetry constrain }
+To reduce day symetries we also provide solver variant, which searchs for 
+only solutions with days assignment in lexically asecending order. To achieve this
+we use built-in constrain \ccc{lex\_chain}.
 
-| ?- test(X).                       
-X = [[1,1,2,2],[1,2,1,2]] ? ;
-X = [[1,1,2,2],[1,2,2,1]] ? ;
-X = [[1,1,2,2],[2,1,1,2]] ? ;
-X = [[1,1,2,2],[2,1,2,1]] ? ;
-X = [[1,2,1,2],[1,2,2,1]] ? ;
-X = [[1,2,1,2],[2,1,1,2]] ? ;
-X = [[1,2,1,2],[2,2,1,1]] ? ;
-X = [[1,2,2,1],[2,1,2,1]] ? ;
-X = [[1,2,2,1],[2,2,1,1]] ? ;
-X = [[2,1,1,2],[2,1,2,1]] ? ;
-X = [[2,1,1,2],[2,2,1,1]] ? ;
-X = [[2,1,2,1],[2,2,1,1]] ? ;
-no
+\section{User manual}
+Entire source code is present in file \ccc{golf-problem-solver.pl}.
+There are basically two predicates one can be interested in:
+\begin{itemize}
+\item \ccc{golf} - solves golf problem with symetries of exchanged days removed by defining asscending lexical order of days,
+\item \ccc{golf\_all} - solves golf problem with all (even symetric) solutions. 
+\end{itemize}
 
+There are following variants of these predicates with parameters description:
+\begin{verbatim}
+% golf_all(-DaysAttendance, +N, +K, +G, +D) :- 
+% golf(-DaysAttendance, +N, +K, +G, +D) :- 
+% golf_all(-T, -DaysAttendance, +N, +K, +G, +D, +Opt) :- 
+% golf(-T, -DaysAttendance, +N, +K, +G, +D, +Opt) :- 
+% T ... time of search in miliseconds
+% N ... number of players
+% K ... number of players in group
+% G ... number of groups
+% D ... number of days
+% Opt ... labeling predicate options
+\end{verbatim}
 
-                                              
+Example call can be as follows:
+\begin{verbatim}
+| ?- golf(T, X, 20, 4, 5, 4, []).
+T = 20920,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,1,4,5,2,3,5,1,3,2],[1,2,3,4,4,3,2,5,5,1,2,4,3,1,5,2,4,5,1,3]] ? 
+yes
 
-\section{example data}
+% formated X output
+% 1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+% 1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+% 1,2,3,4,2,1,4,5,3,4,5,1,4,5,2,3,5,1,3,2
+% 1,2,3,4,4,3,2,5,5,1,2,4,3,1,5,2,4,5,1,3
+% ABCD | EFGH | IJKL | MNOP | QRST | 
+% AEIM | BFJQ | CGNR | DKOS | HLPT | 
+% AFLR | BEOT | CIPS | DGJM | HKNQ | 
+% AJNS | BGKP | CFMT | DELQ | HIOR | 
+\end{verbatim}
+
+To simplify running more jobs and getting better output we have created
+bash script \ccc{test.sh}. It automatically sets prologs print options
+and formates result output and even converts result to table of sets 
+as it is in problem definition \ref{table}. Lastly it saves log output into
+file with name, metioning passed parameters, to log directory.
+
+Script has following parameters:
+\begin{verbatim}                                            
+test.sh <solver-variant> [N K G D <labeling-opts-params> <variants-count-to-search>]
+<solver-variant> := basic|day_symetries
+\end{verbatim}                                            
+
 \section{Tests}
-different models - symetric/notsymetric
-different search strategies ? configure labeling ? 
-different data - different parameters
+Beside some really simple variants such as in predicate \ccc{test(X)} we ran 
+solver with parameters as in original problem \ref{table}.
 
+$$N=20, K=4, G=5, D=5 $$
+
+Follows interesting part of logged solver output for variant which reduces 
+symetries of days:
+
+\begin{verbatim}
+./logs/log-day_symetries-20-4-5-5-[]-10.txt
+
+T = 4139770,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3],[1,2,3,4,4,5,2,3,2,3,5,1,5,1,3,4,4,5,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3
+1,2,3,4,4,5,2,3,2,3,5,1,5,1,3,4,4,5,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AJPR | BHMS | CEKT | DFIN | GLOQ | 
+ALNS | BGIT | CHJO | DEPQ | FKMR | 
+T = 4139820,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3],[1,2,3,5,5,4,2,3,2,3,4,1,4,1,3,5,5,4,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3
+1,2,3,5,5,4,2,3,2,3,4,1,4,1,3,5,5,4,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AJPR | BHMS | CEKT | DFIN | GLOQ | 
+ALNS | BGIT | CHJO | FKMR | DEPQ | 
+\end{verbatim}
+
+Another par of logged solver output, which is not
+reducing symetries, is as follows:
+
+\begin{verbatim}
+./logs/log-basic-20-4-5-5-[]-10.txt
+
+T = 7714440,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3],[1,2,3,4,4,5,2,3,2,3,5,1,5,1,3,4,4,5,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3
+1,2,3,4,4,5,2,3,2,3,5,1,5,1,3,4,4,5,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AJPR | BHMS | CEKT | DFIN | GLOQ | 
+ALNS | BGIT | CHJO | DEPQ | FKMR | 
+T = 7714500,
+X = [[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5],[1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5],[1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1],[1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3],[1,2,3,5,5,4,2,3,2,3,4,1,4,1,3,5,5,4,1,2]] ? 
+1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5
+1,2,3,4,1,2,3,5,1,2,4,5,1,3,4,5,2,3,4,5
+1,2,3,4,2,1,4,5,3,4,5,2,4,5,1,3,5,2,3,1
+1,2,3,4,3,4,5,2,4,1,3,5,2,4,5,1,5,1,2,3
+1,2,3,5,5,4,2,3,2,3,4,1,4,1,3,5,5,4,1,2
+ABCD | EFGH | IJKL | MNOP | QRST | 
+AEIM | BFJQ | CGNR | DKOS | HLPT | 
+AFOT | BELR | CIPS | DGJM | HKNQ | 
+AJPR | BHMS | CEKT | DFIN | GLOQ | 
+ALNS | BGIT | CHJO | FKMR | DEPQ | 
+
+\end{verbatim}
+
+We can see that reducing symetries is really usefull, because 
+compute time is nearly 2 times faster. However for smaller 
+problems the difference is not that interesting.
+
+We have also tried different labeling parametr options, however
+default behaviour appeared to be the fastest one. You can found all the logs
+in \ccc{logs} folder to see the difference in durations.
 \end{document}
