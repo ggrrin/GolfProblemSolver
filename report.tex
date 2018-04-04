@@ -222,22 +222,35 @@ Furthermore, there is still quite a few constrains which just ensure that player
 are assigned properly to groups. Following model thus try to look at problem from
 different perspective in order to simplify requried constrains.
 
-\subsection{Dual model}
+\subsection{Dual model (used one)}
 In this model there is met trade of between numbers of variables and numbers of values in domains.
 We are going to assign groups to players which reduces number of variables significantly.
 
 \mdef{}{ Lets define CSP model $M_c = \langle V_c,D_c,C_c \rangle$ such as:
 	\begin{enumerate}[(i)]
-		\item $$ V_c = \{V_k|  \forall i \in [D], \forall j \in [N] \exists k \in \mathbb{N}: V_k \text{ is CSP variable } \land  k=i*N+j \} $$
-		\item $$ D_c = \{D_i| \forall V_i \in V: D_i = [G] \} $$
-		\item $$ C_c = \{ C_1, C_2, C_3\} $$
+
+        \item For each day we define variables for each player such as the variable of $j$-th player in $i$-th day determines group the player is in for that day.
+            $$ V_c = \{V_{i,j} |  \forall i \in [D], \forall j \in [N]: V_{i,j} \text{ CSP variable }  \} $$
+        \item Domain of each variable $V_{i,j}$ is set of numbers of each group $1,...,G$ player can be in. 
+            $$ D_c = \{D_{i,j}| \forall V_{i,j} \in V_c: D_{i,j} = [G] \} $$
+		\item In this model we need $3$ constrains defined below.
+            $$ C_c = \{ C_1, C_2, C_3\} $$
 		\begin{enumerate}
 			\item To ensure condition \ref{groups-size} we need constrain $C_1$ ensuring that group assignment leds to 
-			groups of equal size $K$.
+			groups of equal size $K$. 
+                \\
+                $\forall i \in [D]: \forall g \in [G]:$
+                $$|\{V_{i,j}| \exists j \in [N]: V_{i,j} = g \}| =  K$$
 			\item The condition \ref{one-player} is taken for granted in this model, because each player in each day has assigned only one group.
 			\item The condition \ref{once-per-day} is also taken for granted, because every player  in each day has assigned group.
 			\item We still need to ensure condition \ref{player-pairs} with constrain $C_2$ requiring that each pair of player plays at most once.
+                \\
+                $\forall i' \neq i \in [D]: \forall k \neq l \in [N]:$ 
+                $$V_{i,k} = V_{i,l} =>  V_{i',k} \neq V_{i',l} $$
 			\item Optionaly we can add constrain $C_3$ reducing only solutions where days are accepted only in lexically ascending order - which reduces symetries.
+                \\
+                $\forall i < i' \in [D]:$ \\
+                $(V_{i,1} \leq V_{i',1}) \land (V_{i,1} = V_{i',1} => V_{i,2} \leq V_{i',2}) \land ... \land (V_{i,1} = V_{i',1} \land ... \land V_{i,N-1} = V_{i',N-1}  => V_{i,N} < V_{i',N})$
 		\end{enumerate}
 	\end{enumerate}
 }
@@ -272,6 +285,8 @@ it is clear candidate for implementation, which is described in next section.
 \section{CSP model $M_c$ implementation}
 All the variables are stored in \textit{variables data structure} implemented as list
 of days, where each days has $N$ variables determinig players group assignment.
+For the purpouse of describing domain filtration algorithm of the 
+\ccc{pair\_constrain} we define following notation.
 
 \mdef{}{
 \textit{Variables data structure}(VDS) is matrix $\mathbb{D}$ with $D \times N$ dimensions such as:
